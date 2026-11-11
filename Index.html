@@ -1,1 +1,1170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SVM: Breast Cancer Detection Simulator (gordxrohit)</title>
+<meta name="description" content="Interactive 3D research simulator for 'Breast Cancer Detection using SVM on a Custom Regional Dataset of Jharkhand'.">
+<style>
+:root{--bg:#fafaf7;--bg2:#f0f0ea;--ink:#14171a;--mut:#5b645f;--line:#dcdcd2;--card:#ffffff;--green:#2ecc71;--blue:#3498db;--red:#e74c3c;--coral:#e07856;--teal:#5a8a6b;--accent:#1f7a4d;--stage:#d3d9d5;--serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+html.dark{--bg:#0a0f1e;--bg2:#10172b;--ink:#e8ecf3;--mut:#98a4b8;--line:#232d48;--card:#111a31;--accent:#4fdc92;--stage:#0b1224}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 var(--sans);overflow-x:hidden;-webkit-text-size-adjust:100%}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:0;background:var(--ink);color:var(--bg);padding:8px 12px;z-index:200}
+.skip:focus{left:8px;top:8px}
+/* top bar */
+.topbar{position:sticky;top:0;z-index:50;height:52px;display:flex;align-items:center;gap:10px;padding:0 12px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.brand{font-family:var(--serif);font-style:italic;font-weight:600;font-size:1.05rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brand b{color:var(--accent)}
+.spacer{flex:1}
+.btn{border:1px solid var(--line);background:var(--card);padding:6px 11px;border-radius:8px;font-size:.78rem;cursor:pointer;line-height:1.2;min-height:34px}
+.btn:hover{border-color:var(--mut)}
+.btn[aria-pressed=true],.btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:transparent;padding:6px 10px;font-size:.78rem;cursor:pointer;min-height:32px}
+.seg button[aria-pressed=true]{background:var(--ink);color:var(--bg)}
+.controls{display:flex;align-items:center;gap:8px}
+#ctlBtn,#navBtn{display:none}
+/* shell */
+.shell{display:grid;grid-template-columns:240px minmax(0,1fr) 260px;max-width:1680px;margin:0 auto}
+.shell>*{min-width:0}
+nav.side{position:sticky;top:52px;height:calc(100vh - 52px);overflow:auto;padding:18px 14px;border-right:1px solid var(--line)}
+nav.side h2{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:0 0 10px;font-weight:600}
+nav.side a{display:flex;gap:10px;align-items:baseline;padding:7px 8px;border-radius:8px;color:var(--ink);text-decoration:none;font-size:.88rem;border-left:3px solid transparent}
+nav.side a span{font:600 .72rem var(--mono);color:var(--mut);width:1.4rem}
+nav.side a:hover{background:var(--bg2)}
+nav.side a[aria-current=page]{background:var(--bg2);border-left-color:var(--accent);font-weight:600}
+nav.side .keys{margin-top:18px;font-size:.74rem;color:var(--mut);line-height:1.7}
+kbd{font:600 .7rem var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 5px;background:var(--card)}
+aside.read{position:sticky;top:52px;height:calc(100vh - 52px);overflow:auto;padding:18px 14px;border-left:1px solid var(--line)}
+aside.read h3{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--mut);margin:16px 0 6px;font-weight:600}
+aside.read h3:first-of-type{margin-top:0}
+.rhandle{display:none}
+dl.kv{margin:0;display:grid;grid-template-columns:1fr auto;gap:3px 10px;font-size:.84rem}
+dl.kv dt{color:var(--mut)}
+dl.kv dd{margin:0;font:600 .82rem var(--mono);text-align:right;overflow-wrap:anywhere}
+.scrim{display:none}
+main{padding:22px 26px 60px;min-height:100vh}
+.hero{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.kicker{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--mut);margin:0 0 10px;font-weight:600}
+h1{font-family:var(--serif);font-style:italic;font-weight:500;font-size:clamp(1.9rem,4.4vw,3.3rem);line-height:1.08;margin:0 0 12px;letter-spacing:-.01em}
+.cap{font-family:var(--serif);font-size:clamp(1rem,1.6vw,1.2rem);color:var(--mut);margin:0;max-width:62ch}
+.sec{display:none;animation:fade .35s ease}
+.sec.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.sn{font:600 .72rem var(--mono);letter-spacing:.12em;color:var(--accent);margin:0 0 4px;text-transform:uppercase}
+h2.st{font-family:var(--serif);font-weight:500;font-size:clamp(1.5rem,2.8vw,2.1rem);margin:0 0 10px;line-height:1.15}
+h3{font-family:var(--serif);font-weight:600;margin:0 0 6px}
+.lead{max-width:72ch;font-size:1.02rem}
+.note{font-size:.8rem;color:var(--mut);max-width:78ch;border-left:3px solid var(--line);padding-left:10px;margin:14px 0}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:16px 0}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat b{display:block;font:600 1.5rem var(--serif)}
+.stat span{font-size:.74rem;color:var(--mut);text-transform:uppercase;letter-spacing:.08em}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.card p{margin:0;font-size:.9rem;color:var(--mut)}
+.card h3{font-size:1.05rem}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0}
+.row{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:center}
+.row label{font-size:.8rem;color:var(--mut);display:flex;flex-direction:column;gap:3px;min-width:130px}
+.row label b{color:var(--ink);font:600 .85rem var(--mono)}
+.row select,.row input[type=range]{width:100%}
+select{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:34px}
+input[type=range]{accent-color:var(--accent);min-height:28px}
+/* stage */
+.stage-wrap{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--card);margin:14px 0}
+.stage{position:relative;height:clamp(380px,64vh,640px);background:var(--stage);overflow:hidden}
+.host{position:absolute;inset:0}
+.host canvas{display:block;width:100%;height:100%;touch-action:none;outline:none}
+.hint{position:absolute;left:10px;bottom:8px;font-size:.7rem;color:#fff;background:rgba(15,20,18,.55);padding:3px 8px;border-radius:99px;pointer-events:none;max-width:calc(100% - 20px)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;padding:8px 10px;border-top:1px solid var(--line);align-items:center}
+.presets .lbl{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--mut);margin-right:4px}
+.tip{position:absolute;z-index:5;pointer-events:none;background:rgba(14,18,16,.92);color:#fff;font-size:.76rem;line-height:1.45;padding:7px 10px;border-radius:8px;max-width:220px;display:none;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.tip b{color:#9be8bd}
+.math{position:absolute;right:10px;top:10px;z-index:4;background:rgba(14,18,16,.78);color:#fff;border-radius:10px;padding:8px 12px;font-family:var(--serif);font-size:.95rem;pointer-events:none;max-width:calc(100% - 20px)}
+.math small{display:block;font:.7rem var(--mono);color:#9be8bd;margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.78rem;color:var(--mut);margin:8px 0}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+.clabel{position:absolute;z-index:3;transform:translate(-50%,-100%);pointer-events:none;background:rgba(14,18,16,.82);color:#fff;border-radius:8px;padding:3px 9px;font-size:.74rem;text-align:center;white-space:nowrap;border:1px solid rgba(255,255,255,.2)}
+.clabel b{font-size:.9rem}
+.clabel small{display:block;font-size:.64rem;opacity:.8}
+.cpanel{position:absolute;top:0;right:0;bottom:0;width:min(340px,86%);background:var(--card);border-left:1px solid var(--line);padding:16px;transform:translateX(105%);transition:transform .35s ease;z-index:6;overflow:auto}
+.cpanel.open{transform:none}
+.cpanel h3{font-size:1.2rem}
+.cpanel p{font-size:.88rem;margin:8px 0}
+.cpanel .x{position:absolute;right:8px;top:8px}
+.step-panel{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:12px 0}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tabs button{border:1px solid var(--line);background:transparent;border-radius:99px;padding:5px 11px;font-size:.76rem;cursor:pointer;min-height:32px}
+.tabs button[aria-selected=true]{color:#fff;border-color:transparent}
+.sp-c{display:block;font:.76rem var(--mono);background:var(--bg2);padding:6px 9px;border-radius:6px;margin:8px 0;overflow-x:auto;white-space:pre}
+.step-cv{width:100%;height:210px;display:block}
+.sp-nav{display:flex;gap:8px;margin-top:8px}
+.cwrap{position:relative;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px;margin:12px 0}
+.cwrap canvas{width:100%;display:block}
+.tbl{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+.tbl th,.tbl td{padding:9px 12px;border-bottom:1px solid var(--line);text-align:right}
+.tbl th:first-child,.tbl td:first-child{text-align:left}
+.tbl thead th{font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mut)}
+.tbl td.g{color:var(--teal);font-weight:600}.tbl td.m{color:var(--coral);font-weight:600}
+.scroll-x{overflow-x:auto;border:1px solid var(--line);border-radius:12px}
+.modal{position:fixed;inset:0;background:rgba(5,8,15,.6);z-index:120;display:flex;align-items:center;justify-content:center;padding:14px}
+.modal[hidden]{display:none}
+.mbox{background:var(--card);border-radius:14px;padding:14px;width:min(560px,100%);max-height:94vh;overflow:auto;position:relative}
+.mbox canvas{width:100%;height:340px;display:block}
+.mbox .x{position:absolute;right:10px;top:10px}
+.cards2{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.cards2 ul{margin:6px 0 0;padding-left:18px;font-size:.88rem;color:var(--mut)}
+.cards2 li{margin:4px 0}
+.code{background:#0f1523;color:#d7deee;border-radius:12px;overflow:auto;padding:12px 0;font:.8rem/1.6 var(--mono);max-height:560px}
+.code .cl{display:block;white-space:pre;padding:0 14px 0 0;cursor:pointer;min-width:max-content}
+.code .cl:hover,.code .cl.sel{background:rgba(255,255,255,.08)}
+.code .n{display:inline-block;width:3em;text-align:right;color:#5d6b88;margin-right:14px;user-select:none}
+.tk-k{color:#ff7b9c}.tk-s{color:#9be8bd}.tk-c{color:#6f7d9c;font-style:italic}.tk-n{color:#f5c26b}.tk-f{color:#7cc4ff}
+.anno{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--accent);border-radius:8px;padding:10px 14px;margin:10px 0;font-size:.9rem;min-height:3.2em}
+#fallback3d{display:none;padding:20px;color:var(--mut)}
+/* responsive */
+@media (max-width:1100px){
+ .shell{grid-template-columns:minmax(0,1fr)}
+ #navBtn,#ctlBtn{display:inline-flex}
+ nav.side{position:fixed;left:0;top:52px;bottom:0;height:auto;width:260px;background:var(--bg);z-index:70;transform:translateX(-102%);transition:transform .25s;border-right:1px solid var(--line)}
+ nav.side.open{transform:none;box-shadow:8px 0 30px rgba(0,0,0,.25)}
+ .scrim.show{display:block;position:fixed;inset:52px 0 0 0;background:rgba(0,0,0,.35);z-index:60}
+ .controls{display:none;position:absolute;right:8px;top:58px;flex-wrap:wrap;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;max-width:calc(100vw - 16px);box-shadow:0 10px 30px rgba(0,0,0,.2)}
+ .controls.open{display:flex}
+ aside.read{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;max-height:62vh;z-index:55;background:var(--bg);border-left:0;border-top:1px solid var(--line);transform:translateY(calc(100% - 38px));transition:transform .3s;padding:0 14px 14px}
+ aside.read.open{transform:none;box-shadow:0 -10px 30px rgba(0,0,0,.2)}
+ .rhandle{display:flex;width:100%;justify-content:space-between;align-items:center;height:38px;background:transparent;border:0;cursor:pointer;font-size:.74rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:600}
+ main{padding:16px 14px 70px}
+}
+@media (max-width:560px){
+ .stage{height:min(66vh,480px);min-height:360px}
+ .cpanel{width:92%}
+ .clabel small{display:none}
+ .tbl th,.tbl td{padding:8px 6px;font-size:.84rem}
+ .brand{font-size:.92rem}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="topbar" role="banner">
+  <button class="btn" id="navBtn" aria-label="Open section navigation" aria-expanded="false" aria-controls="sideNav">☰</button>
+  <div class="brand">SVM <b>Breast Cancer Detection</b> :  gordxrohit </div>
+  <div class="spacer"></div>
+  <button class="btn" id="ctlBtn" aria-label="Open global controls" aria-expanded="false" aria-controls="controls">⚙ Controls</button>
+  <div class="controls" id="controls" role="group" aria-label="Global controls">
+    <div class="seg" role="group" aria-label="Render quality"><button data-q="low" aria-pressed="false">Low</button><button data-q="medium" aria-pressed="false">Med</button><button data-q="high" aria-pressed="false">High</button></div>
+    <button class="btn" id="tShadow" aria-pressed="true">Shadows</button>
+    <button class="btn" id="tBloom" aria-pressed="true">Bloom</button>
+    <button class="btn" id="tDark" aria-pressed="false">Dark</button>
+    <button class="btn" id="tPause" aria-pressed="false" title="Space">Pause</button>
+  </div>
+</div>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+  <nav class="side" id="sideNav" aria-label="Sections">
+    <h2>Sections</h2>
+    <div id="navList"></div>
+    <div class="keys"><kbd>1</kbd>–<kbd>9</kbd> jump · <kbd>0</kbd> §10 · <kbd>-</kbd> §11<br><kbd>←</kbd> <kbd>→</kbd> prev / next<br><kbd>R</kbd> reset camera · <kbd>Space</kbd> pause</div>
+  </nav>
 
+  <main id="main" tabindex="-1">
+    <header class="hero">
+      <p class="kicker">BIT Mesra · M.tech CSE : Rohit kumar mandal</p>
+      <h1>SVM Diagnostic 3D: Breast Cancer Detection Simulator.</h1>
+      <p class="cap">Explore the SVM pipeline for breast cancer classification using a custom synthetic regional dataset from Jharkhand.</p>
+    </header>
+
+    <!-- 1 -->
+    <section class="sec" id="sec1" aria-labelledby="t1">
+      <p class="sn">01 · Abstract &amp; Overview</p>
+      <h2 class="st" id="t1">Abstract &amp; Overview</h2>
+      <p class="lead">This project evaluates a Support Vector Machine with an RBF kernel on a custom synthetic regional dataset of <b>569 records</b> across six Jharkhand regions. Five features — age, tumor size, lymph-node status, family history and BMI — are used to classify benign and malignant cases. SVM is compared with a Decision Tree baseline.</p>
+      <div class="stats">
+        <div class="stat"><b>569</b><span>Records</span></div>
+        <div class="stat"><b>6</b><span>Regions</span></div>
+        <div class="stat"><b>5</b><span>Features</span></div>
+        <div class="stat"><b>455 / 114</b><span>Train / Test</span></div>
+        <div class="stat"><b style="color:var(--green)">88.60%</b><span>SVM accuracy</span></div>
+      </div>
+      <div class="stage-wrap" data-scene="pipeline">
+        <div class="stage"><div class="host" role="img" aria-label="3D flow diagram of the machine-learning pipeline: Data, Preprocessing, Scaling, Training, Evaluation"></div><div class="hint">Drag to orbit · wheel / pinch to zoom · click a node to fly to it</div></div>
+        <div class="presets"></div>
+      </div>
+      <div class="step-panel" aria-label="Pipeline step details"></div>
+      <p class="note"><b>Data note.</b> The 569 records shown here are synthetic demonstration data, not real patient or hospital records. The dataset schema is Patient_ID, Region, Age, Tumor_Size_mm, Lymph_Node_Status, Family_History, BMI and Diagnosis. The 3D hyperplane and decision surfaces are illustrative teaching visualizations, not a fitted clinical model. The reported evaluation metrics are from the project's 80:20 train-test experiment.</p>
+    </section>
+
+    <!-- 2 -->
+    <section class="sec" id="sec2" aria-labelledby="t2">
+      <p class="sn">02 · The Dataset</p>
+      <h2 class="st" id="t2">The Dataset</h2>
+      <p class="lead">Each sphere represents one synthetic record in (Age, Tumor Size, BMI) space. Teal = benign, coral = malignant. Click a sphere for details; filter by region, diagnosis and age.</p>
+      <div class="panel">
+        <div class="row">
+          <label>Region<select id="fRegion" aria-label="Filter by region"></select></label>
+          <label style="min-width:auto"><span>Diagnosis</span><span class="seg" role="group" aria-label="Diagnosis filter"><button data-d="all" aria-pressed="true">All</button><button data-d="0" aria-pressed="false">Benign</button><button data-d="1" aria-pressed="false">Malignant</button></span></label>
+          <label>Min age <b id="vAmin">25</b><input id="fAmin" type="range" min="25" max="74" value="25" aria-label="Minimum age"></label>
+          <label>Max age <b id="vAmax">74</b><input id="fAmax" type="range" min="25" max="74" value="74" aria-label="Maximum age"></label>
+          <label style="min-width:auto">Showing<b id="fCount">569 / 569</b></label>
+        </div>
+      </div>
+      <div class="stage-wrap" data-scene="scatter">
+        <div class="stage"><div class="host" role="img" aria-label="3D scatter plot of 569 records by age, tumor size and BMI"></div><div class="tip" id="tipScatter"></div><div class="hint">Click a point · drag to orbit · pinch / wheel to zoom</div></div>
+        <div class="presets"></div>
+      </div>
+      <div class="legend"><span><i class="dot" style="background:var(--teal)"></i>Benign (351)</span><span><i class="dot" style="background:var(--coral)"></i>Malignant (218)</span><span>Axes: Age (years) · Tumor size (mm) · BMI (kg/m²)</span></div>
+      <h3>Dataset distribution</h3>
+      <div class="cwrap"><canvas id="chDist" role="img" aria-label="Four subplots: age histogram, tumor size histogram, diagnosis pie chart, regional distribution"></canvas></div>
+    </section>
+
+    <!-- 3 -->
+    <section class="sec" id="sec3" aria-labelledby="t3">
+      <p class="sn">03 · SVM Theory</p>
+      <h2 class="st" id="t3">SVM Theory — the RBF hyperplane</h2>
+      <div class="grid3">
+        <div class="card"><h3>Maximum margin</h3><p>An SVM picks the boundary that leaves the widest possible street between classes. Only the points on the street edge — the <b>support vectors</b> — define it.</p></div>
+        <div class="card"><h3>Kernel trick</h3><p>The RBF kernel measures similarity as <i>exp(−γ‖xᵢ−xⱼ‖²)</i>, letting a linear separator in feature space become a curved surface in the original space.</p></div>
+        <div class="card"><h3>C and γ</h3><p><b>C</b> trades margin width for training errors (soft → hard). <b>γ</b> sets how local each support vector's influence is, and so how wiggly the surface gets.</p></div>
+      </div>
+      <div class="panel">
+        <div class="row">
+          <label>C (regularization) <b id="vC">1.00</b><input id="sC" type="range" min="0" max="100" value="33" aria-label="C regularization from 0.1 to 100"></label>
+          <label>γ (gamma) <b id="vG">1.00</b><input id="sG" type="range" min="0" max="100" value="50" aria-label="Gamma from 0.1 to 10"></label>
+          <label style="min-width:auto"><span>Auto-rotate</span><button class="btn" id="bRot" aria-pressed="true">Rotating</button></label>
+        </div>
+      </div>
+      <div class="stage-wrap" data-scene="hyper">
+        <div class="stage"><div class="host" role="img" aria-label="3D SVM decision surface with support vectors and margin planes"></div>
+          <div class="math" aria-live="polite"><span>K(xᵢ, xⱼ) = exp(−γ‖xᵢ − xⱼ‖²)</span><small id="mathG">γ = 1.00</small></div>
+          <div class="hint">Frosted glass = decision surface · green / red = margin planes · white = support vectors</div></div>
+        <div class="presets"></div>
+      </div>
+      <div class="legend"><span><i class="dot" style="background:#fff;border:1px solid #888"></i>Support vectors (18)</span><span><i class="dot" style="background:#2ecc71"></i>Benign-side margin</span><span><i class="dot" style="background:#e74c3c"></i>Malignant-side margin</span></div>
+    </section>
+
+    <!-- 4 -->
+    <section class="sec" id="sec4" aria-labelledby="t4">
+      <p class="sn">04 · ML Pipeline</p>
+      <h2 class="st" id="t4">ML Pipeline — step by step</h2>
+      <p class="lead">Pick a stage below or click a node in 3D. The camera flies to the node and the matching visualization appears in the panel.</p>
+      <div class="stage-wrap" data-scene="pipeline">
+        <div class="stage"><div class="host" role="img" aria-label="3D pipeline with data particles flowing between nodes"></div><div class="hint">Click a node · particles show data flowing left → right</div></div>
+        <div class="presets"></div>
+      </div>
+      <div class="step-panel" aria-label="Pipeline step details"></div>
+    </section>
+
+    <!-- 5 -->
+    <section class="sec" id="sec5" aria-labelledby="t5">
+      <p class="sn">05 · Results &amp; Metrics</p>
+      <h2 class="st" id="t5">Results &amp; Metrics</h2>
+      <p class="lead">Hover a bar for precision, recall and F1. The SVM is compared with a Decision Tree baseline.</p>
+      <div class="cwrap"><canvas id="chBars" role="img" aria-label="Bar chart: SVM 88.60%, Decision Tree 84.21%" tabindex="0"></canvas><div class="tip" id="tipBars"></div></div>
+      <h3>Classification metrics — SVM (malignant = positive class)</h3>
+      <div class="scroll-x"><table class="tbl" id="tblReport">
+        <thead><tr><th>Metric</th><th>Value</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td>Accuracy</td><td class="g">88.60%</td><td>101 / 114 correct</td></tr>
+          <tr><td>Precision</td><td class="m">81.63%</td><td>40 / 49 predicted malignant</td></tr>
+          <tr><td>Recall</td><td class="m">90.91%</td><td>40 / 44 actual malignant</td></tr>
+          <tr><td>F1-score</td><td class="m">86.02%</td><td>Harmonic mean of precision and recall</td></tr>
+        </tbody></table></div>
+      <p class="note">The test set contains 114 records. Malignant is treated as the positive class. Metrics shown here are accuracy 88.60%, precision 81.63%, recall 90.91% and F1-score 86.02%. The Decision Tree baseline achieved 84.21% accuracy. The dataset is synthetic and these results are not clinical validation.</p>
+    </section>
+
+    <!-- 6 -->
+    <section class="sec" id="sec6" aria-labelledby="t6">
+      <p class="sn">06 · Confusion Matrix</p>
+      <h2 class="st" id="t6">Confusion Matrix — 114 test records</h2>
+      <p class="lead">Cube volume is proportional to patient count. The red false-negative cube pulses every two seconds — a missed cancer is the costliest error. Click a cube (or use the buttons below) for details.</p>
+      <div class="stage-wrap" data-scene="confusion">
+        <div class="stage"><div class="host" role="img" aria-label="Four 3D cubes showing true negatives 61, false positives 9, false negatives 4, true positives 40"></div>
+          <div class="clabel" data-c="TN"></div><div class="clabel" data-c="FP"></div><div class="clabel" data-c="FN"></div><div class="clabel" data-c="TP"></div>
+          <aside class="cpanel" id="cpanel" aria-live="polite"></aside>
+          <div class="hint">Click a cube · rows = actual, columns = predicted</div></div>
+        <div class="presets"></div>
+      </div>
+      <div class="row" id="cmChips" style="margin:8px 0"></div>
+    </section>
+
+    <!-- 7 -->
+    <section class="sec" id="sec7" aria-labelledby="t7">
+      <p class="sn">07 · Decision Boundary</p>
+      <h2 class="st" id="t7">Decision Boundary — confidence surface</h2>
+      <p class="lead">Age vs Tumor Size. Height and colour show the predicted probability of malignancy (green = benign, red = malignant). Lines mark confidence 0.3, 0.5 and 0.7. Hover or tap the surface to read values.</p>
+      <div class="stage-wrap" data-scene="boundary">
+        <div class="stage"><div class="host" role="img" aria-label="3D confidence surface over age and tumor size with contour lines and patient points"></div><div class="tip" id="tipBound" style="display:block;left:10px;top:10px;pointer-events:none">Hover the surface…</div><div class="hint">Contours: 0.3 · 0.5 · 0.7</div></div>
+        <div class="presets"></div>
+      </div>
+      <div class="legend"><span><i class="dot" style="background:#1a9850"></i>Benign</span><span><i class="dot" style="background:#ffffbf;border:1px solid #aaa"></i>Uncertain</span><span><i class="dot" style="background:#d73027"></i>Malignant</span><span>Probabilities come from a kernel-smoothed classifier over the 569 records (illustrative).</span></div>
+    </section>
+
+    <!-- 8 -->
+    <section class="sec" id="sec8" aria-labelledby="t8">
+      <p class="sn">08 · Feature Correlation</p>
+      <h2 class="st" id="t8">Feature Correlation</h2>
+      <p class="lead">Pearson correlations computed on the 569 records. Click any cell for a scatter plot of that feature pair. Bold outlines mark the key findings.</p>
+      <div class="cwrap"><canvas id="chHeat" role="img" aria-label="6 by 6 correlation heatmap" tabindex="0"></canvas></div>
+      <div class="stats" id="keyFind"></div>
+      <p class="note" id="heatStatus" aria-live="polite">Hover a cell to read it.</p>
+    </section>
+
+    <!-- 9 -->
+    <section class="sec" id="sec9" aria-labelledby="t9">
+      <p class="sn">09 · Complexity Analysis</p>
+      <h2 class="st" id="t9">Complexity Analysis</h2>
+      <p class="lead">Kernel SVM training scales between O(n²) and O(n³) in the number of samples; A Decision Tree is approximately O(n·d·log n). At n = 569 both models are small enough for a quick experiment; larger datasets may change the computational trade-offs.</p>
+      <div class="panel"><div class="row"><label style="min-width:240px">Samples n <b id="vN">569</b><input id="cxN" type="range" min="100" max="10000" step="50" value="569" aria-label="Number of samples"></label><span id="cxOut" style="font:.8rem var(--mono);color:var(--mut)"></span></div></div>
+      <div class="cwrap"><canvas id="chCx" role="img" aria-label="Log-scale growth chart of operations versus samples for SVM and decision tree"></canvas></div>
+      <div class="grid3">
+        <div class="card"><h3>Training</h3><p>SVC training can range from roughly O(n²) to O(n³), depending on data and solver behavior. DT training is commonly around O(n·d·log n).</p></div>
+        <div class="card"><h3>Prediction</h3><p>SVM: O(n_SV·d) — cost grows with support vectors. DT: O(depth).</p></div>
+        <div class="card"><h3>Memory</h3><p>Kernel cache up to O(n²). With 569 records that is only ~2.6 MB of float64.</p></div>
+      </div>
+    </section>
+
+    <!-- 10 -->
+    <section class="sec" id="sec10" aria-labelledby="t10">
+      <p class="sn">10 · Limitations &amp; Future Scope</p>
+      <h2 class="st" id="t10">Limitations &amp; Future Scope</h2>
+      <div class="cards2">
+        <div class="card"><h3>Limitations</h3><ul><li>Synthetic regional data, 569 records — limited generalisation.</li><li>Five tabular features; no imaging or histopathology.</li><li>Single train/test split, no external validation.</li><li>RBF-SVM is hard to interpret clinically.</li><li>False negatives (4 of 44 malignant test records) are important to monitor.</li></ul></div>
+        <div class="card"><h3>Future scope</h3><ul><li>Multi-centre data across eastern India.</li><li>Cross-validation, calibration and threshold tuning to cut FNs.</li><li>Gradient boosting and ensemble baselines.</li><li>Mammogram / ultrasound features with CNNs.</li><li>SHAP-style explanations for clinicians.</li></ul></div>
+        <div class="card"><h3>Ethics &amp; deployment</h3><ul><li>Decision support, never a replacement for a clinician.</li><li>Audit performance across age and district subgroups.</li><li>Privacy-preserving or federated training.</li><li>Prospective clinical study before use.</li></ul></div>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section class="sec" id="sec11" aria-labelledby="t11">
+      <p class="sn">11 · Code Explorer</p>
+      <h2 class="st" id="t11">Code Explorer — Listing 1</h2>
+      <p class="lead">Core pipeline from the authors' public notebook (<code>Svm.ipynb</code>, plotting cells omitted). Click any line to see which pipeline stage it belongs to.</p>
+      <div class="row" style="margin:8px 0"><button class="btn" id="bCopy">Copy code</button><span id="copyMsg" style="font-size:.78rem;color:var(--mut)" aria-live="polite"></span></div>
+      <div class="code" id="codeBox" role="region" aria-label="Python source code" tabindex="0"></div>
+      <div class="anno" id="anno" aria-live="polite">Select a line.</div>
+      <p class="note">This code explorer presents the project's SVM model and Decision Tree baseline. The input CSV is synthetic regional demonstration data; no real patient data is used.</p>
+    </section>
+  </main>
+
+  <aside class="read" id="readouts" aria-label="Readouts">
+    <button class="rhandle" id="rHandle" aria-expanded="false"><span>Readouts</span><span id="rArrow">▲</span></button>
+    <h3>Project evaluation</h3>
+    <dl class="kv"><dt>Accuracy</dt><dd>88.60%</dd><dt>Precision</dt><dd>81.63%</dd><dt>Recall</dt><dd>90.91%</dd><dt>F1-score</dt><dd>86.02%</dd><dt>Records</dt><dd>569</dd><dt>Train / test</dt><dd>455 / 114</dd><dt>Kernel</dt><dd>RBF</dd></dl>
+    <h3 id="liveT">Live readout</h3>
+    <dl class="kv" id="liveDl"></dl>
+    <h3>Renderer</h3>
+    <dl class="kv"><dt>FPS</dt><dd id="rFps">–</dd><dt>Quality</dt><dd id="rQ">–</dd><dt>Post-FX</dt><dd id="rPost">–</dd><dt>Draw calls</dt><dd id="rDraw">–</dd><dt>Triangles</dt><dd id="rTri">–</dd></dl>
+  </aside>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="Feature pair scatter plot">
+  <div class="mbox"><button class="btn x" id="mClose" aria-label="Close">✕</button><h3 id="mTitle">Scatter</h3><canvas id="mCv" role="img" aria-label="Scatter plot of selected features"></canvas><p id="mTxt" style="font-size:.85rem;color:var(--mut);margin:6px 0 0"></p></div>
+</div>
+<div id="fallback3d" role="alert">3D scenes could not be loaded (the Three.js CDN is unreachable). Charts and text remain available.</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/FXAAShader.js"></script>
+<script>
+'use strict';
+/* ============================ UTILITIES ============================ */
+const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const C=()=>({ink:css('--ink'),mut:css('--mut'),line:css('--line'),card:css('--card'),bg:css('--bg'),bg2:css('--bg2')});
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function pearson(a,b){const n=a.length;let ma=0,mb=0;for(let i=0;i<n;i++){ma+=a[i];mb+=b[i]}ma/=n;mb/=n;let sa=0,sb=0,sab=0;for(let i=0;i<n;i++){const x=a[i]-ma,y=b[i]-mb;sa+=x*x;sb+=y*y;sab+=x*y}return sab/Math.sqrt(sa*sb)}
+function rr(ctx,x,y,w,h,r){r=Math.min(r,w/2,Math.abs(h)/2);ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+function fitCanvas(cv,h){const dpr=Math.min(window.devicePixelRatio||1,2);if(h)cv.style.height=h+'px';const w=cv.clientWidth,H=cv.clientHeight;cv.width=Math.max(1,Math.round(w*dpr));cv.height=Math.max(1,Math.round(H*dpr));const ctx=cv.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);return{ctx,w,h:H}}
+const anims={};
+function anim(key,dur,fn){cancelAnimationFrame(anims[key]);if(S.reduced){fn(1);return}const t0=performance.now();(function step(now){const k=Math.min(1,(now-t0)/dur);fn(1-Math.pow(1-k,3));if(k<1)anims[key]=requestAnimationFrame(step)})(t0)}
+const isMobile=window.innerWidth<768||window.matchMedia('(pointer:coarse)').matches;
+const S={quality:isMobile?'medium':'high',shadows:!isMobile,bloom:!isMobile,dark:false,paused:false,reduced:window.matchMedia('(prefers-reduced-motion: reduce)').matches,sec:1};
+
+/* ============================ DATASET (569 records) ============================ */
+const REGIONS=[['Ranchi',168],['Jamshedpur',124],['Dhanbad',98],['Bokaro',76],['Hazaribagh',59],['Dumka',44]];
+const NP=569,NMAL=218,NBEN=351;
+const P=[];
+(function genData(){
+  const rng=mulberry32(20260412);
+  const g=()=>{let u=0;while(u===0)u=rng();const v=rng();return Math.sqrt(-2*Math.log(u))*Math.cos(6.283185307*v)};
+  const shuf=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));const t=a[i];a[i]=a[j];a[j]=t}return a};
+  const regs=[];REGIONS.forEach(([n,c])=>{for(let i=0;i<c;i++)regs.push(n)});shuf(regs);
+  const dg=shuf(Array.from({length:NP},(_,i)=>i<NMAL?1:0));
+  const lyM=shuf(Array.from({length:NMAL},(_,i)=>i<209?1:0)),lyB=shuf(Array.from({length:NBEN},(_,i)=>i<23?1:0));
+  let km=0,kb=0;
+  for(let i=0;i<NP;i++){
+    const d=dg[i];let age=25+Math.floor(rng()*50);if(d&&rng()<.25)age=40+Math.floor(rng()*35);
+    P.push({idx:i,id:'JH-'+(2023+Math.floor(rng()*4))+'-'+String(i+1).padStart(4,'0'),region:regs[i],age:age,
+      bmi:+(18.5+rng()*16.5).toFixed(1),lymph:d?lyM[km++]:lyB[kb++],fam:rng()<(d?.42:.33)?1:0,diag:d,z:g(),tumor:0});
+  }
+  const setT=s=>P.forEach(p=>{p.tumor=Math.round(clamp((p.diag?158:112)+s*(p.diag?38:28)*p.z,45,265))});
+  const dv=P.map(p=>p.diag);let lo=.05,hi=3;
+  for(let k=0;k<30;k++){const m=(lo+hi)/2;setT(m);if(pearson(P.map(p=>p.tumor),dv)>0.78)lo=m;else hi=m}
+  setT((lo+hi)/2);
+})();
+const FEAT=[{k:'age',n:'Age',s:'Age',u:'years'},{k:'tumor',n:'Tumor Size',s:'Tumor',u:'mm'},{k:'lymph',n:'Lymph Node',s:'Lymph',u:'0/1'},{k:'fam',n:'Family Hx',s:'FamHx',u:'0/1'},{k:'bmi',n:'BMI',s:'BMI',u:'kg/m²'},{k:'diag',n:'Diagnosis',s:'Diag',u:'0/1'}];
+const FV=FEAT.map(f=>P.map(p=>p[f.k]));
+const CM=FEAT.map((_,i)=>FEAT.map((_,j)=>i===j?1:pearson(FV[i],FV[j])));
+const AGE0=25,AGE1=74,TUM0=45,TUM1=265;
+/* world mappings for scatter scenes (cube 8 wide) */
+const WX=a=>(a-20)/60*8-4, WY=t=>(t-40)/230*8, WZ=b=>(b-15)/25*8-4;
+const regionCounts=REGIONS.map(([n])=>({n,b:P.filter(p=>p.region===n&&!p.diag).length,m:P.filter(p=>p.region===n&&p.diag).length}));
+const MODELS=[{n:'SVM (RBF)',a:88.60,p:81.63,r:90.91,f:86.02,c:'#2ecc71'},{n:'Decision Tree',a:84.21,p:78.26,r:81.82,f:80.00,c:'#e07856'}];
+const SECTIONS=['Abstract & Overview','The Dataset','SVM Theory','ML Pipeline','Results & Metrics','Confusion Matrix','Decision Boundary','Feature Correlation','Complexity Analysis','Limitations & Future Scope','Code Explorer'];
+
+/* ============================ PIPELINE STEPS + PANEL ============================ */
+const STEPS=[
+ {short:'Data',col:'#3498db',t:'Data — 569 regional records',d:'Synthetic records from six Jharkhand regions: age, tumor size (mm), lymph-node status, family history and BMI, with a benign / malignant diagnosis.',c:"df = pd.read_csv('Jharkhand_Breast_Cancer_Dataset.csv')"},
+ {short:'Preprocess',col:'#1abc9c',t:'Preprocessing — encode & select',d:'Diagnosis is mapped to Benign = 0 and Malignant = 1. The five clinical columns form X; Patient_ID and Region are excluded.',c:"df['Diagnosis_Encoded'] = le.fit_transform(df['Diagnosis'])"},
+ {short:'Scaling',col:'#9b59b6',t:'Scaling — StandardScaler',d:'z = (x − μ) / σ. The RBF kernel is distance-based, so un-scaled tumor size (mm) would swamp the other features. The scaler is fitted on training data only.',c:'X_train_scaled = scaler.fit_transform(X_train)'},
+ {short:'Training',col:'#2ecc71',t:'Training — SVC with RBF kernel',d:'80 / 20 split: 455 training and 114 test records (ringed). SVC(kernel="rbf", C=1.0, gamma="scale") is fitted on the scaled training set.',c:"svm_model = SVC(kernel='rbf', C=1.0, gamma='scale')"},
+ {short:'Evaluation',col:'#f39c12',t:'Evaluation — held-out test set',d:'Accuracy, precision, recall, F1-score and confusion matrix are calculated on 114 held-out records. A Decision Tree is the baseline.',c:'classification_report(y_test, svm_pred)'}
+];
+let stepNow=0;
+function buildStepPanels(){
+  $$('.step-panel').forEach(el=>{
+    el.innerHTML='<div class="tabs" role="tablist" aria-label="Pipeline steps">'+STEPS.map((s,i)=>`<button role="tab" data-i="${i}" style="--c:${s.col}">${i+1}. ${s.short}</button>`).join('')+'</div><h3 class="sp-t"></h3><p class="sp-d" style="margin:0"></p><code class="sp-c"></code><canvas class="step-cv" role="img" aria-label="Visualization for the selected pipeline step"></canvas><div class="sp-nav"><button class="btn" data-d="-1">← Prev</button><button class="btn" data-d="1">Next →</button></div>';
+    el.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.i!==undefined)setStep(+b.dataset.i,true);else if(b.dataset.d)setStep((stepNow+ +b.dataset.d+5)%5,true)});
+  });
+}
+function setStep(i,fly){
+  stepNow=i;renderSteps();
+  if(window.PIPE&&PIPE.built){PIPE.highlight(i);if(fly)PIPE.focusNode(i)}
+}
+function renderSteps(){
+  $$('.step-panel').forEach(el=>{
+    const s=STEPS[stepNow];
+    $$('.tabs button',el).forEach((b,i)=>{b.setAttribute('aria-selected',i===stepNow);b.style.background=i===stepNow?STEPS[i].col:'transparent'});
+    $('.sp-t',el).textContent=s.t;$('.sp-d',el).textContent=s.d;$('.sp-c',el).textContent=s.c;
+    if(el.offsetParent)drawStep($('.step-cv',el),stepNow);
+  });
+}
+function miniHist(ctx,x,y,w,h,vals,min,max,bins,color,title,c){
+  const cnt=new Array(bins).fill(0);vals.forEach(v=>{const b=clamp(Math.floor((v-min)/(max-min)*bins),0,bins-1);cnt[b]++});
+  const mx=Math.max(...cnt);ctx.fillStyle=c.mut;ctx.font='11px '+css('--sans');ctx.textAlign='left';ctx.fillText(title,x,y+10);
+  const by=y+18,bh=h-34;cnt.forEach((n,i)=>{const bw=w/bins;ctx.fillStyle=color;ctx.fillRect(x+i*bw+1,by+bh-bh*n/mx,bw-2,bh*n/mx)});
+  ctx.strokeStyle=c.line;ctx.beginPath();ctx.moveTo(x,by+bh+.5);ctx.lineTo(x+w,by+bh+.5);ctx.stroke();
+  ctx.fillStyle=c.mut;ctx.textAlign='left';ctx.fillText(+min.toFixed(1),x,by+bh+13);ctx.textAlign='right';ctx.fillText(+max.toFixed(1),x+w,by+bh+13);
+}
+function drawStep(cv,i){
+  const {ctx,w,h}=fitCanvas(cv);const c=C();ctx.clearRect(0,0,w,h);const col=STEPS[i].col;ctx.font='11px '+css('--mono');
+  if(i===0){
+    const cols=w<430?[['ID',0],['Age',.4],['mm',.55],['L',.7],['BMI',.78],['Dx',.92]]:[['Patient_ID',0],['Region',.2],['Age',.4],['Tumor mm',.5],['Lymph',.66],['Fam',.76],['BMI',.84],['Dx',.94]];
+    const keys=w<430?['id','age','tumor','lymph','bmi','diag']:['id','region','age','tumor','lymph','fam','bmi','diag'];
+    ctx.fillStyle=c.mut;ctx.textAlign='left';cols.forEach(([n,f])=>ctx.fillText(n,6+f*(w-12),16));
+    ctx.strokeStyle=c.line;ctx.beginPath();ctx.moveTo(0,24.5);ctx.lineTo(w,24.5);ctx.stroke();
+    for(let r=0;r<7;r++){const p=P[r];keys.forEach((k,j)=>{ctx.fillStyle=k==='diag'?(p.diag?'#e07856':'#5a8a6b'):c.ink;const v=k==='diag'?(p.diag?'M':'B'):p[k];ctx.fillText(String(v),6+cols[j][1]*(w-12),44+r*22)})}
+    ctx.fillStyle=c.mut;ctx.fillText('… 569 rows × 8 columns',6,h-8);
+  }else if(i===1){
+    const bw=w-120;[['Benign → 0',NBEN,'#5a8a6b'],['Malignant → 1',NMAL,'#e07856']].forEach(([n,v,cl],k)=>{const y=24+k*44;ctx.fillStyle=c.ink;ctx.textAlign='left';ctx.fillText(n,6,y-6);ctx.fillStyle=cl;rr(ctx,6,y,bw*v/NP*1.6,20,5);ctx.fill();ctx.fillStyle=c.ink;ctx.fillText(v+' ('+(v/NP*100).toFixed(1)+'%)',12+bw*v/NP*1.6,y+14)});
+    ctx.fillStyle=c.mut;ctx.fillText('X = Age, Tumor_Size_mm, Lymph_Node_Status, Family_History, BMI',6,h-30);ctx.fillText('y = Diagnosis_Encoded   (no missing columns after selection)',6,h-12);
+  }else if(i===2){
+    const t=P.map(p=>p.tumor),mu=t.reduce((a,b)=>a+b)/t.length,sd=Math.sqrt(t.reduce((a,b)=>a+(b-mu)*(b-mu),0)/t.length);
+    const hw=(w-30)/2;miniHist(ctx,6,6,hw,h-12,t,40,270,12,'#9aa5b8','Raw tumor size (mm)',c);miniHist(ctx,hw+24,6,hw,h-12,t.map(v=>(v-mu)/sd),-3,3,12,col,'Standardized (μ=0, σ=1)',c);
+    ctx.fillStyle=c.mut;ctx.textAlign='center';ctx.fillText('μ='+mu.toFixed(0)+' σ='+sd.toFixed(0),6+hw/2,h-2);ctx.fillText('μ=0.00 σ=1.00',hw+24+hw/2,h-2);
+  }else if(i===3){
+    const px=v=>8+(v-AGE0)/(AGE1-AGE0)*(w-16),py=v=>h-18-(v-TUM0)/(TUM1-TUM0)*(h-30);
+    P.forEach(p=>{ctx.fillStyle=p.diag?'rgba(224,120,86,.7)':'rgba(90,138,107,.7)';ctx.beginPath();ctx.arc(px(p.age),py(p.tumor),2.6,0,6.3);ctx.fill();if(p.idx%5===0){ctx.strokeStyle=c.ink;ctx.lineWidth=1;ctx.beginPath();ctx.arc(px(p.age),py(p.tumor),5,0,6.3);ctx.stroke()}});
+    ctx.fillStyle=c.mut;ctx.textAlign='left';ctx.fillText('Age →',8,h-4);ctx.fillText('○ test (114)  · train (455)   Tumor ↑',w-230>60?w-230:70,h-4);
+  }else{
+    const m=[['Accuracy',88.60],['Precision',81.63],['Recall',90.91],['F1-score',86.02]];ctx.textAlign='left';
+    m.forEach(([n,v],k)=>{const y=14+k*46;ctx.fillStyle=c.ink;ctx.fillText(n,6,y+10);ctx.fillStyle=c.bg2;rr(ctx,86,y,w-140,22,6);ctx.fill();ctx.fillStyle=col;rr(ctx,86,y,(w-140)*v/100,22,6);ctx.fill();ctx.fillStyle=c.ink;ctx.fillText(v+'%',w-48,y+15)});
+  }
+}
+
+/* ============================ CHART 1: bars ============================ */
+let barsProg=1,barsHover=-1,barRects=[];
+function drawBars(prog){
+  if(prog!==undefined)barsProg=prog;const cv=$('#chBars');if(!cv.offsetParent)return;
+  const {ctx,w,h}=fitCanvas(cv,300);const c=C();const L=44,R=12,T=22,B=44,pw=w-L-R,ph=h-T-B;ctx.clearRect(0,0,w,h);
+  ctx.font='11px '+css('--sans');ctx.textAlign='right';ctx.fillStyle=c.mut;ctx.strokeStyle=c.line;
+  for(let v=0;v<=100;v+=20){const y=T+ph*(1-v/100);ctx.beginPath();ctx.moveTo(L,y+.5);ctx.lineTo(w-R,y+.5);ctx.stroke();ctx.fillText(v+'%',L-6,y+4)}
+  const gap=pw/MODELS.length,bw=Math.min(96,gap*.56);barRects=[];
+  MODELS.forEach((m,i)=>{const x=L+gap*i+(gap-bw)/2,bh=ph*(m.a/100)*barsProg,y=T+ph-bh;barRects.push({x,y:T,w:bw,h:ph});
+    ctx.globalAlpha=barsHover<0||barsHover===i?1:.4;ctx.fillStyle=m.c;rr(ctx,x,y,bw,bh,6);ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle=c.ink;ctx.textAlign='center';ctx.font='600 13px '+css('--sans');ctx.fillText((m.a*barsProg).toFixed(1)+'%',x+bw/2,y-6);
+    ctx.font='12px '+css('--sans');ctx.fillStyle=c.mut;ctx.fillText(m.n,x+bw/2,h-T+8+8)});
+}
+function initBars(){
+  const cv=$('#chBars'),tip=$('#tipBars');
+  const move=e=>{const r=cv.getBoundingClientRect(),x=e.clientX-r.left,y=e.clientY-r.top;let k=-1;barRects.forEach((b,i)=>{if(x>=b.x&&x<=b.x+b.w)k=i});
+    if(k!==barsHover){barsHover=k;drawBars()}
+    if(k>=0){const m=MODELS[k];tip.style.display='block';tip.innerHTML=`<b>${m.n}</b><br>Accuracy ${m.a}%<br>Precision ${m.p.toFixed(2)}<br>Recall ${m.r.toFixed(2)}<br>F1-score ${m.f.toFixed(2)}`;tip.style.left=clamp(x+14,0,r.width-150)+'px';tip.style.top=clamp(y-10,0,r.height-90)+'px'}else tip.style.display='none'};
+  cv.addEventListener('pointermove',move);cv.addEventListener('pointerdown',move);cv.addEventListener('pointerleave',()=>{barsHover=-1;tip.style.display='none';drawBars()});
+  cv.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.stopPropagation();barsHover=(barsHover+(e.key==='ArrowRight'?1:-1)+MODELS.length)%MODELS.length;drawBars();const m=MODELS[barsHover];tip.style.display='block';tip.innerHTML=`<b>${m.n}</b><br>P ${m.p} · R ${m.r} · F1 ${m.f}`;tip.style.left='60px';tip.style.top='20px'}});
+}
+
+/* ============================ CHART 2: heatmap ============================ */
+let heatHover=null,heatGeom=null;
+const KEYCELLS=[[1,5],[5,1],[2,5],[5,2]];
+function corrColor(v){const t=clamp(v,-1,1);const a=Math.abs(t);const base=t<0?[52,152,219]:[231,76,60];return`rgb(${Math.round(255+(base[0]-255)*a)},${Math.round(255+(base[1]-255)*a)},${Math.round(255+(base[2]-255)*a)})`}
+function drawHeat(){
+  const cv=$('#chHeat');if(!cv.offsetParent)return;const narrow=cv.clientWidth<520;
+  const left=narrow?50:92,top=narrow?34:40,wv=cv.clientWidth,cell=(wv-left-6)/6;
+  const {ctx,w,h}=fitCanvas(cv,Math.round(top+cell*6+46));const c=C();ctx.clearRect(0,0,w,h);heatGeom={left,top,cell};
+  ctx.font=(narrow?'10':'12')+'px '+css('--sans');
+  FEAT.forEach((f,i)=>{ctx.fillStyle=c.mut;ctx.textAlign='center';ctx.fillText(narrow?f.s:f.n,left+cell*(i+.5),top-10);ctx.textAlign='right';ctx.fillText(narrow?f.s:f.n,left-6,top+cell*(i+.5)+4)});
+  for(let i=0;i<6;i++)for(let j=0;j<6;j++){const v=CM[i][j],x=left+j*cell,y=top+i*cell;ctx.fillStyle=corrColor(v);ctx.fillRect(x+1,y+1,cell-2,cell-2);
+    ctx.fillStyle=Math.abs(v)>.62?'#fff':'#14171a';ctx.textAlign='center';ctx.font='600 '+(narrow?11:13)+'px '+css('--mono');ctx.fillText(v.toFixed(2),x+cell/2,y+cell/2+4)}
+  ctx.lineWidth=3;ctx.strokeStyle=c.ink;KEYCELLS.forEach(([i,j])=>{ctx.strokeRect(left+j*cell+2,top+i*cell+2,cell-4,cell-4)});
+  if(heatHover){ctx.lineWidth=2;ctx.strokeStyle='#3498db';ctx.strokeRect(left+heatHover[1]*cell+1,top+heatHover[0]*cell+1,cell-2,cell-2)}
+  const by=top+cell*6+16,bx=left,bw=cell*6;const gr=ctx.createLinearGradient(bx,0,bx+bw,0);gr.addColorStop(0,corrColor(-1));gr.addColorStop(.5,'#fff');gr.addColorStop(1,corrColor(1));
+  ctx.fillStyle=gr;ctx.fillRect(bx,by,bw,10);ctx.strokeStyle=c.line;ctx.lineWidth=1;ctx.strokeRect(bx+.5,by+.5,bw-1,9);ctx.fillStyle=c.mut;ctx.font='11px '+css('--sans');ctx.textAlign='left';ctx.fillText('−1',bx,by+24);ctx.textAlign='center';ctx.fillText('0',bx+bw/2,by+24);ctx.textAlign='right';ctx.fillText('+1',bx+bw,by+24);
+}
+function heatCell(e){if(!heatGeom)return null;const r=$('#chHeat').getBoundingClientRect(),g=heatGeom;const j=Math.floor((e.clientX-r.left-g.left)/g.cell),i=Math.floor((e.clientY-r.top-g.top)/g.cell);return(i>=0&&i<6&&j>=0&&j<6)?[i,j]:null}
+function initHeat(){
+  const cv=$('#chHeat'),st=$('#heatStatus');
+  cv.addEventListener('pointermove',e=>{const k=heatCell(e);if(String(k)!==String(heatHover)){heatHover=k;drawHeat();st.textContent=k?`${FEAT[k[0]].n} ↔ ${FEAT[k[1]].n}: r = ${CM[k[0]][k[1]].toFixed(3)} — click for scatter plot`:'Hover a cell to read it.'}});
+  cv.addEventListener('pointerleave',()=>{heatHover=null;drawHeat()});
+  cv.addEventListener('click',e=>{const k=heatCell(e);if(k)openModal(k[0],k[1])});
+  let kc=[1,5];cv.addEventListener('keydown',e=>{if(e.key==='Enter'){openModal(kc[0],kc[1])}else if(e.key.startsWith('Arrow')&&e.shiftKey){e.preventDefault();kc=[clamp(kc[0]+(e.key==='ArrowDown')-(e.key==='ArrowUp'),0,5),clamp(kc[1]+(e.key==='ArrowRight')-(e.key==='ArrowLeft'),0,5)];heatHover=kc;drawHeat();st.textContent=`${FEAT[kc[0]].n} ↔ ${FEAT[kc[1]].n}: r = ${CM[kc[0]][kc[1]].toFixed(3)} (Enter = scatter)`}});
+  $('#keyFind').innerHTML=[[1,5,'Tumor Size ↔ Diagnosis'],[2,5,'Lymph Node ↔ Diagnosis'],[0,1,'Age ↔ Tumor Size'],[4,5,'BMI ↔ Diagnosis']].map(([i,j,n])=>`<div class="stat"><b style="color:${i<3&&j===5&&i>0?'var(--coral)':'var(--ink)'}">${CM[i][j].toFixed(2)}</b><span>${n}</span></div>`).join('');
+  $('#mClose').addEventListener('click',closeModal);$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal()});
+}
+let lastFocus=null;
+function openModal(i,j){
+  lastFocus=document.activeElement;const m=$('#modal');m.hidden=false;$('#mTitle').textContent=i===j?`${FEAT[i].n} — distribution`:`${FEAT[i].n} vs ${FEAT[j].n}`;
+  $('#mTxt').textContent=i===j?'Histogram of the feature, split by diagnosis.':`Pearson r = ${CM[i][j].toFixed(3)} · teal = benign, coral = malignant${(FEAT[i].u==='0/1'||FEAT[j].u==='0/1')?' · binary values are jittered':''}`;
+  $('#mClose').focus();requestAnimationFrame(()=>drawModal(i,j));
+}
+function closeModal(){$('#modal').hidden=true;if(lastFocus)lastFocus.focus()}
+function drawModal(i,j){
+  const cv=$('#mCv');const {ctx,w,h}=fitCanvas(cv);const c=C();ctx.clearRect(0,0,w,h);const L=46,R=14,T=12,B=40,pw=w-L-R,ph=h-T-B;
+  const rngJ=mulberry32(7);const range=k=>{const v=FV[k];return[Math.min(...v),Math.max(...v)]};
+  ctx.font='11px '+css('--sans');ctx.strokeStyle=c.line;ctx.fillStyle=c.mut;
+  if(i===j){const [mn,mx]=range(i);const bins=FEAT[i].u==='0/1'?2:14;const cn=[new Array(bins).fill(0),new Array(bins).fill(0)];P.forEach(p=>{const b=bins===2?p[FEAT[i].k]:clamp(Math.floor((p[FEAT[i].k]-mn)/(mx-mn)*bins),0,bins-1);cn[p.diag][b]++});
+    const my=Math.max(...cn[0],...cn[1]),bw=pw/bins;for(let b=0;b<bins;b++){[0,1].forEach(d=>{ctx.fillStyle=d?'rgba(224,120,86,.75)':'rgba(90,138,107,.75)';const bh=ph*cn[d][b]/my;ctx.fillRect(L+b*bw+bw*(d?.5:.05),T+ph-bh,bw*.45,bh)})}
+    ctx.fillStyle=c.mut;ctx.textAlign='left';ctx.fillText(mn,L,h-22);ctx.textAlign='right';ctx.fillText(mx,w-R,h-22);ctx.textAlign='center';ctx.fillText(FEAT[i].n+' ('+FEAT[i].u+')',L+pw/2,h-6);
+  }else{
+    const [x0,x1]=range(i),[y0,y1]=range(j);const px=v=>L+(v-x0)/(x1-x0)*pw,py=v=>T+ph-(v-y0)/(y1-y0)*ph;
+    ctx.beginPath();ctx.moveTo(L+.5,T);ctx.lineTo(L+.5,T+ph+.5);ctx.lineTo(L+pw,T+ph+.5);ctx.stroke();
+    P.forEach(p=>{let a=p[FEAT[i].k],b=p[FEAT[j].k];const jx=FEAT[i].u==='0/1'?(rngJ()-.5)*.25:0,jy=FEAT[j].u==='0/1'?(rngJ()-.5)*.25:0;ctx.fillStyle=p.diag?'rgba(224,120,86,.6)':'rgba(90,138,107,.6)';ctx.beginPath();ctx.arc(px(a+jx*(x1-x0)),py(b+jy*(y1-y0)),3,0,6.3);ctx.fill()});
+    ctx.fillStyle=c.mut;ctx.textAlign='left';ctx.fillText(x0,L,h-22);ctx.textAlign='right';ctx.fillText(x1,w-R,h-22);ctx.textAlign='center';ctx.fillText(FEAT[i].n+' ('+FEAT[i].u+')',L+pw/2,h-6);
+    ctx.textAlign='right';ctx.fillText(y0,L-6,T+ph);ctx.fillText(y1,L-6,T+10);ctx.save();ctx.translate(12,T+ph/2);ctx.rotate(-Math.PI/2);ctx.textAlign='center';ctx.fillText(FEAT[j].n+' ('+FEAT[j].u+')',0,0);ctx.restore();
+  }
+}
+
+/* ============================ CHART 3: distribution ============================ */
+function histCounts(key,min,max,bins){const r=[new Array(bins).fill(0),new Array(bins).fill(0)];P.forEach(p=>{r[p.diag][clamp(Math.floor((p[key]-min)/(max-min)*bins),0,bins-1)]++});return r}
+function drawDist(prog){
+  const cv=$('#chDist');if(!cv.offsetParent)return;if(prog===undefined)prog=1;const W=cv.clientWidth,two=W>=620,sh=two?250:230;
+  const {ctx,w,h}=fitCanvas(cv,two?sh*2:sh*4);const c=C();ctx.clearRect(0,0,w,h);const cw=two?w/2:w;
+  const rect=k=>two?{x:(k%2)*cw,y:Math.floor(k/2)*sh,w:cw,h:sh}:{x:0,y:k*sh,w:cw,h:sh};
+  const title=(r,t)=>{ctx.fillStyle=c.ink;ctx.font='600 13px '+css('--sans');ctx.textAlign='left';ctx.fillText(t,r.x+16,r.y+20)};
+  const histPlot=(r,t,key,min,max,bins,unit)=>{title(r,t);const cn=histCounts(key,min,max,bins),mx=Math.max(...cn[0],...cn[1]);const L=r.x+40,T=r.y+34,pw=r.w-L+r.x-18,ph=r.h-34-44,bw=pw/bins;
+    ctx.strokeStyle=c.line;ctx.fillStyle=c.mut;ctx.font='10px '+css('--sans');ctx.textAlign='right';for(let k=0;k<=4;k++){const y=T+ph*(1-k/4);ctx.beginPath();ctx.moveTo(L,y+.5);ctx.lineTo(L+pw,y+.5);ctx.stroke();ctx.fillText(Math.round(mx*k/4),L-5,y+3)}
+    for(let b=0;b<bins;b++)[0,1].forEach(d=>{ctx.fillStyle=d?'rgba(224,120,86,.85)':'rgba(90,138,107,.85)';const bh=ph*cn[d][b]/mx*prog;ctx.fillRect(L+b*bw+bw*(d?.5:.06),T+ph-bh,bw*.44,bh)});
+    ctx.fillStyle=c.mut;ctx.textAlign='left';ctx.fillText(min,L,T+ph+14);ctx.textAlign='right';ctx.fillText(max,L+pw,T+ph+14);ctx.textAlign='center';ctx.fillText(unit,L+pw/2,T+ph+28);
+    ctx.fillStyle='rgba(90,138,107,.9)';ctx.fillRect(L+pw-100,T-2,8,8);ctx.fillStyle=c.mut;ctx.textAlign='left';ctx.fillText('Benign',L+pw-88,T+6);ctx.fillStyle='rgba(224,120,86,.9)';ctx.fillRect(L+pw-44,T-2,8,8);ctx.fillStyle=c.mut;ctx.fillText('Malig.',L+pw-32,T+6)};
+  histPlot(rect(0),'Age by diagnosis','age',25,75,10,'Age (years)');
+  histPlot(rect(1),'Tumor size by diagnosis','tumor',40,280,12,'Tumor size (mm)');
+  const r2=rect(2);title(r2,'Diagnosis split');const rad=Math.min(r2.h/2-34,r2.w*.2),cx=r2.x+rad+24,cy=r2.y+r2.h/2+8;let a0=-Math.PI/2;
+  [['Benign',NBEN,'#5a8a6b'],['Malignant',NMAL,'#e07856']].forEach(([n,v,cl],k)=>{const a1=a0+Math.PI*2*v/NP*prog;ctx.fillStyle=cl;ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,rad,a0,a1);ctx.closePath();ctx.fill();a0=a1;
+    ctx.fillStyle=cl;ctx.fillRect(cx+rad+22,cy-24+k*34,10,10);ctx.fillStyle=c.ink;ctx.font='12px '+css('--sans');ctx.textAlign='left';ctx.fillText(`${n}: ${v} (${(v/NP*100).toFixed(1)}%)`,cx+rad+38,cy-14+k*34)});
+  const r3=rect(3);title(r3,'Records by region');const L=r3.x+40,T=r3.y+36,pw=r3.w-56,ph=r3.h-36-52,bw=pw/6,mx=Math.max(...regionCounts.map(r=>r.b+r.m));
+  ctx.strokeStyle=c.line;ctx.fillStyle=c.mut;ctx.font='10px '+css('--sans');ctx.textAlign='right';for(let k=0;k<=4;k++){const y=T+ph*(1-k/4);ctx.beginPath();ctx.moveTo(L,y+.5);ctx.lineTo(L+pw,y+.5);ctx.stroke();ctx.fillText(Math.round(mx*k/4),L-5,y+3)}
+  regionCounts.forEach((r,i)=>{const x=L+i*bw+bw*.15,bwid=bw*.7,hb=ph*r.b/mx*prog,hm=ph*r.m/mx*prog;ctx.fillStyle='rgba(90,138,107,.9)';ctx.fillRect(x,T+ph-hb,bwid,hb);ctx.fillStyle='rgba(224,120,86,.9)';ctx.fillRect(x,T+ph-hb-hm,bwid,hm);
+    ctx.fillStyle=c.mut;ctx.textAlign='center';ctx.fillText(r.n.length>8?r.n.slice(0,7)+'.':r.n,x+bwid/2,T+ph+14);ctx.fillStyle=c.ink;ctx.fillText(r.b+r.m,x+bwid/2,T+ph-hb-hm-4)});
+}
+
+/* ============================ CHART 9: complexity ============================ */
+const cxOps={svm2:n=>n*n,svm3:n=>n*n*n,dt:n=>5*n*Math.log2(n)};
+function fmtOps(v){return v>=1e9?(v/1e9).toFixed(1)+'G':v>=1e6?(v/1e6).toFixed(1)+'M':v>=1e3?(v/1e3).toFixed(1)+'k':Math.round(v)}
+function drawCx(prog){
+  const cv=$('#chCx');if(!cv.offsetParent)return;if(prog===undefined)prog=1;const {ctx,w,h}=fitCanvas(cv,330);const c=C();ctx.clearRect(0,0,w,h);
+  const L=46,R=14,T=16,B=48,pw=w-L-R,ph=h-T-B,NX=10000,y0=1,y1=12;const px=n=>L+n/NX*pw,py=v=>T+ph*(1-(Math.log10(Math.max(v,1))-y0)/(y1-y0));
+  ctx.font='10px '+css('--sans');ctx.textAlign='right';ctx.strokeStyle=c.line;ctx.fillStyle=c.mut;
+  for(let e=1;e<=12;e+=initCxStep(ph)){const y=py(Math.pow(10,e));ctx.beginPath();ctx.moveTo(L,y+.5);ctx.lineTo(L+pw,y+.5);ctx.stroke();ctx.fillText('10^'+e,L-5,y+3)}
+  ctx.textAlign='center';[0,2500,5000,7500,10000].forEach(n=>ctx.fillText(n,px(n),T+ph+14));ctx.fillText('samples n  ·  y: operations (log scale, d = 5)',L+pw/2,T+ph+32);
+  const series=[['O(n³) worst-case SVM',cxOps.svm3,'#2ecc71',[5,4]],['O(n²) SVM',cxOps.svm2,'#2ecc71',[]],['O(n·d·log n) DT',cxOps.dt,'#e07856',[]]];
+  series.forEach(([nm,f,cl,dash],si)=>{ctx.strokeStyle=cl;ctx.lineWidth=2.2;ctx.setLineDash(dash);ctx.beginPath();const nmax=Math.max(60,NX*prog);for(let n=60;n<=nmax;n+=50){const x=px(n),y=py(f(n));n===60?ctx.moveTo(x,y):ctx.lineTo(x,y)}ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=cl;ctx.fillRect(L+8+(si%2)*(pw/2),T+6+Math.floor(si/2)*16,10,3);ctx.fillStyle=c.ink;ctx.textAlign='left';ctx.fillText(nm,L+22+(si%2)*(pw/2),T+11+Math.floor(si/2)*16)});
+  ctx.lineWidth=1;const n=+$('#cxN').value;ctx.strokeStyle=c.ink;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(px(n)+.5,T);ctx.lineTo(px(n)+.5,T+ph);ctx.stroke();ctx.setLineDash([]);
+  $('#vN').textContent=n;$('#cxOut').textContent=`n²=${fmtOps(cxOps.svm2(n))} · n³=${fmtOps(cxOps.svm3(n))} · DT=${fmtOps(cxOps.dt(n))}`;
+}
+function initCxStep(ph){return ph<200?3:1}
+
+/* ============================ CODE EXPLORER ============================ */
+const CODE=`import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import (
+    accuracy_score,
+    precision_score,
+    recall_score,
+    f1_score,
+    confusion_matrix,
+    classification_report
+)
+
+# 1. Load the synthetic regional dataset
+df = pd.read_csv("Jharkhand_Breast_Cancer_Dataset.csv")
+
+# 2. Select input features and target
+features = [
+    "Age",
+    "Tumor_Size_mm",
+    "Lymph_Node_Status",
+    "Family_History",
+    "BMI"
+]
+X = df[features]
+y = df["Diagnosis"].map({
+    "Benign": 0,
+    "Malignant": 1
+})
+
+# 3. Split: 80% training, 20% testing
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y,
+    test_size=0.20,
+    random_state=42,
+    stratify=y
+)
+
+# 4. Standardize using training data only
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# 5. Train the RBF Support Vector Machine
+svm_model = SVC(
+    kernel="rbf",
+    C=1.0,
+    gamma="scale"
+)
+svm_model.fit(X_train_scaled, y_train)
+svm_pred = svm_model.predict(X_test_scaled)
+
+# 6. Evaluate SVM (Malignant = positive class)
+print("Accuracy:", accuracy_score(y_test, svm_pred))
+print("Precision:", precision_score(y_test, svm_pred, pos_label=1))
+print("Recall:", recall_score(y_test, svm_pred, pos_label=1))
+print("F1-score:", f1_score(y_test, svm_pred, pos_label=1))
+print("Confusion matrix:")
+print(confusion_matrix(y_test, svm_pred))
+print(classification_report(
+    y_test, svm_pred,
+    target_names=["Benign", "Malignant"]
+))
+
+# 7. Decision Tree baseline (unscaled features)
+dt_model = DecisionTreeClassifier(random_state=42)
+dt_model.fit(X_train, y_train)
+dt_pred = dt_model.predict(X_test)
+print("Decision Tree accuracy:", accuracy_score(y_test, dt_pred))`;
+const CODE_NOTES=[
+ [1,10,0,'Imports: pandas and scikit-learn tools for splitting, scaling, models and evaluation.'],
+ [12,13,0,'Stage 1 · Load the synthetic regional CSV dataset.'],
+ [15,25,1,'Stage 2 · Select five input features and map Benign to 0 and Malignant to 1.'],
+ [27,33,1,'Stage 3 · Split 80:20 with random_state=42 and stratify=y.'],
+ [35,38,2,'Stage 4 · Fit StandardScaler on training data only, then transform the test data.'],
+ [40,47,3,'Stage 5 · Train the RBF SVM using C=1.0 and gamma=scale.'],
+ [49,60,4,'Stage 6 · Evaluate accuracy, precision, recall, F1-score and confusion matrix. Malignant is the positive class.'],
+ [62,66,3,'Stage 7 · Train and evaluate the Decision Tree baseline on the original, unscaled features.']
+];
+function highlightPy(line){
+  const esc=line.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return esc.replace(/(#.*$)|((?:f)?"[^"]*"|(?:f)?'[^']*')|\b(import|from|as|for|in|if|else|def|return|print)\b|\b(\d+\.?\d*)\b|\b([A-Za-z_]\w*)(?=\()/g,(m,cm,st,kw,nu,fn)=>cm?`<span class="tk-c">${m}</span>`:st?`<span class="tk-s">${m}</span>`:kw?`<span class="tk-k">${m}</span>`:nu?`<span class="tk-n">${m}</span>`:fn?`<span class="tk-f">${m}</span>`:m);
+}
+function initCode(){
+  const lines=CODE.split('\n');const box=$('#codeBox');
+  box.innerHTML=lines.map((l,i)=>`<span class="cl" data-l="${i+1}"><span class="n">${i+1}</span>${highlightPy(l)}</span>`).join('');
+  box.addEventListener('click',e=>{const l=e.target.closest('.cl');if(!l)return;const n=+l.dataset.l;$$('.cl.sel',box).forEach(x=>x.classList.remove('sel'));l.classList.add('sel');
+    const nt=CODE_NOTES.find(a=>n>=a[0]&&n<=a[1]);$('#anno').innerHTML=nt?`<b>Line ${n}.</b> ${nt[3]} <button class="btn" style="margin-left:6px" data-step="${nt[2]}">Show pipeline step ${nt[2]+1} →</button>`:`<b>Line ${n}.</b> Blank line.`});
+  $('#anno').addEventListener('click',e=>{const b=e.target.closest('button[data-step]');if(b){setStep(+b.dataset.step,true);showSection(4)}});
+  $('#bCopy').addEventListener('click',()=>{const done=ok=>{$('#copyMsg').textContent=ok?'Copied to clipboard.':'Select the code and copy manually.';setTimeout(()=>$('#copyMsg').textContent='',2200)};
+    if(navigator.clipboard)navigator.clipboard.writeText(CODE).then(()=>done(true),()=>done(false));else done(false)});
+}
+
+/* ============================ THREE.JS INFRASTRUCTURE ============================ */
+let HAS3D=!!(window.THREE&&THREE.OrbitControls&&THREE.EffectComposer&&THREE.UnrealBloomPass&&THREE.FXAAShader&&THREE.RenderPass&&THREE.ShaderPass);
+let renderer,composer,renderPass,bloomPass,fxaaPass,canvas3d,activeSC=null;
+const SC={},themeHooks=[],qualityHooks=[];let animT=0;
+const V3=(x,y,z)=>new THREE.Vector3(x,y,z);
+const ray=HAS3D?new THREE.Raycaster():null;
+function onTheme(fn){themeHooks.push(fn);fn(S.dark)}
+function initRenderer(){
+  try{
+    renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance'});
+  }catch(e){HAS3D=false;return}
+  renderer.shadowMap.enabled=S.shadows;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  canvas3d=renderer.domElement;canvas3d.style.touchAction='none';
+  composer=new THREE.EffectComposer(renderer);
+  renderPass=new THREE.RenderPass(new THREE.Scene(),new THREE.PerspectiveCamera());
+  bloomPass=new THREE.UnrealBloomPass(new THREE.Vector2(256,256),0.4,0.6,0.8);
+  fxaaPass=new THREE.ShaderPass(THREE.FXAAShader);
+  composer.addPass(renderPass);composer.addPass(bloomPass);composer.addPass(fxaaPass);
+}
+const bgTex={};
+function bgTexture(dark){
+  if(bgTex[dark])return bgTex[dark];
+  const cv=document.createElement('canvas');cv.width=4;cv.height=256;const x=cv.getContext('2d');const g=x.createLinearGradient(0,0,0,256);
+  if(dark){g.addColorStop(0,'#101a38');g.addColorStop(1,'#03050b')}else{g.addColorStop(0,'#e1e6e2');g.addColorStop(1,'#c7cecb')}
+  x.fillStyle=g;x.fillRect(0,0,4,256);return bgTex[dark]=new THREE.CanvasTexture(cv);
+}
+function makeSprite(text,o){
+  o=o||{};const size=o.size||.5,font=o.font||34,pad=14,bg=o.bg===undefined?'rgba(16,22,20,.8)':o.bg;
+  const cv=document.createElement('canvas'),x=cv.getContext('2d'),f='600 '+font+'px system-ui,sans-serif';x.font=f;
+  cv.width=Math.ceil(x.measureText(String(text)).width)+pad*2;cv.height=font+pad;x.font=f;
+  if(bg){x.fillStyle=bg;rr(x,0,0,cv.width,cv.height,cv.height/2);x.fill()}
+  x.fillStyle=o.color||'#d8dedb';x.textBaseline='middle';x.textAlign='center';x.fillText(String(text),cv.width/2,cv.height/2+2);
+  const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearFilter;
+  const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,transparent:true,depthWrite:false,depthTest:false}));
+  s.scale.set(size*cv.width/cv.height,size,1);s.renderOrder=10;return s;
+}
+function roundedBox(w,h,d,r,seg){
+  seg=seg||16;const g=new THREE.BoxGeometry(w,h,d,seg,seg,seg),pos=g.attributes.position,nor=g.attributes.normal;
+  const hx=w/2-r,hy=h/2-r,hz=d/2-r,v=new THREE.Vector3(),c=new THREE.Vector3();
+  for(let i=0;i<pos.count;i++){v.fromBufferAttribute(pos,i);c.set(clamp(v.x,-hx,hx),clamp(v.y,-hy,hy),clamp(v.z,-hz,hz));v.sub(c);if(v.lengthSq()<1e-12)continue;v.normalize();nor.setXYZ(i,v.x,v.y,v.z);pos.setXYZ(i,c.x+v.x*r,c.y+v.y*r,c.z+v.z*r)}
+  return g;
+}
+function addLights(scene,shadowSize){
+  scene.add(new THREE.AmbientLight(0xffffff,0.4));
+  const key=new THREE.DirectionalLight(0xffe3c2,1.0);key.position.set(6,11,7);key.castShadow=S.shadows;
+  key.shadow.mapSize.set(S.quality==='high'?2048:1024,S.quality==='high'?2048:1024);const c=key.shadow.camera;c.left=-shadowSize;c.right=shadowSize;c.top=shadowSize;c.bottom=-shadowSize;c.near=.5;c.far=45;key.shadow.bias=-0.0005;
+  const fill=new THREE.DirectionalLight(0xdfeaff,0.38);fill.position.set(-7,5,6);
+  const rim=new THREE.DirectionalLight(0x7fb2ff,0.75);rim.position.set(-5,6,-9);
+  const pt=new THREE.PointLight(0xffffff,0.4,30);pt.position.set(0,.6,0);
+  scene.add(key,fill,rim,pt);scene.userData.key=key;
+}
+function baseScene(name,o){
+  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(o.fov||45,1,0.1,200);camera.position.set(...o.pos);
+  const controls=new THREE.OrbitControls(camera,canvas3d);controls.enableDamping=true;controls.dampingFactor=.08;controls.target.set(...o.target);controls.minDistance=o.min||3;controls.maxDistance=o.max||40;controls.enabled=false;controls.update();
+  addLights(scene,o.shadow||10);
+  const sc={name,scene,camera,controls,tween:null,built:false,presets:{},focusLabel:'Focus',update(){},hover:null,click:null,live:null};
+  SC[name]=sc;return sc;
+}
+function flyTo(sc,pos,tgt,raw,dur){
+  const k=raw?1:Math.max(1,1.15/sc.camera.aspect),t=V3(...tgt),p=V3(...pos).sub(t).multiplyScalar(k).add(t);
+  sc.tween={t:0,dur:S.reduced?.01:(dur||1.1),p0:sc.camera.position.clone(),p1:p,t0:sc.controls.target.clone(),t1:t};
+}
+function tickTween(sc,dt){
+  const tw=sc.tween;if(!tw)return;tw.t+=dt;const k=Math.min(1,tw.t/tw.dur),e=k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
+  sc.camera.position.lerpVectors(tw.p0,tw.p1,e);sc.controls.target.lerpVectors(tw.t0,tw.t1,e);if(k>=1)sc.tween=null;
+}
+function applyPreset(name){if(!activeSC||!activeSC.presets[name])return;const p=activeSC.presets[name]();flyTo(activeSC,p[0],p[1],p[2])}
+function studio(scene,size,div){
+  const grid=new THREE.GridHelper(size,div,0x8a948f,0x9aa39f);grid.material.transparent=true;grid.material.opacity=.4;scene.add(grid);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(size*1.8,size*1.8),new THREE.ShadowMaterial({opacity:.24}));floor.rotation.x=-Math.PI/2;floor.position.y=-.004;floor.receiveShadow=true;scene.add(floor);
+}
+function cyl(a,b,r,mat){const d=b.clone().sub(a),len=d.length(),m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,len,8),mat);m.position.copy(a).addScaledVector(d,.5);m.quaternion.setFromUnitVectors(V3(0,1,0),d.normalize());m.castShadow=true;return m}
+function dataAxes(scene){
+  const mat=new THREE.MeshPhysicalMaterial({color:0x56615b,roughness:.4,metalness:.1,clearcoat:.5});onTheme(d=>mat.color.set(d?0xe8ecf3:0x56615b));
+  const O=V3(-4,0,-4);scene.add(cyl(O,V3(4.2,0,-4),.025,mat),cyl(O,V3(-4,8.2,-4),.025,mat),cyl(O,V3(-4,0,4.2),.025,mat));
+  const lab=(t,x,y,z,sz)=>{const s=makeSprite(t,{size:sz||.26,font:30});s.position.set(x,y,z);scene.add(s)};
+  lab('Age (years)',4.7,0,-4,.4);lab('Tumor size (mm)',-4,8.7,-4,.4);lab('BMI (kg/m²)',-4,0,4.8,.4);
+  [30,45,60,75].forEach(a=>lab(a,WX(a),-.3,-4.4));[50,100,150,200,250].forEach(t=>lab(t,-4.45,WY(t),-4.3));[20,25,30,35].forEach(b=>lab(b,-4.4,-.3,WZ(b)));
+}
+/* instanced scatter: 2 draw calls (one per class), 569 instance matrices */
+function makeScatter(o){
+  const radius=o.radius||.1,opacity=o.opacity===undefined?1:o.opacity,seg=14,geo=new THREE.SphereGeometry(1,seg,10);
+  const common={roughness:.3,metalness:.05,clearcoat:1,clearcoatRoughness:.12},tr=opacity<1?{transparent:true,opacity:opacity,depthWrite:false}:{};
+  const matB=new THREE.MeshPhysicalMaterial(Object.assign({color:0x5a8a6b},common,tr));
+  const matM=new THREE.MeshPhysicalMaterial(Object.assign({color:0xe07856,emissive:0xb83a12,emissiveIntensity:.28},common,tr));
+  const idxB=[],idxM=[];P.forEach(p=>(p.diag?idxM:idxB).push(p.idx));
+  const mB=new THREE.InstancedMesh(geo,matB,idxB.length),mM=new THREE.InstancedMesh(geo,matM,idxM.length);
+  [mB,mM].forEach(m=>{m.castShadow=opacity>=1;m.receiveShadow=true;m.frustumCulled=false});
+  const group=new THREE.Group();group.add(mB,mM);
+  const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),s=new THREE.Vector3(),pos=new Array(NP);P.forEach(p=>pos[p.idx]=o.posFn(p));
+  function setAll(fn){[[mB,idxB],[mM,idxM]].forEach(([m,ix])=>{ix.forEach((pi,k)=>{s.setScalar(!fn||fn(P[pi])?radius:.0001);m4.compose(pos[pi],q,s);m.setMatrixAt(k,m4)});m.instanceMatrix.needsUpdate=true})}
+  setAll();
+  return{group,mB,mM,idxB,idxM,pos,matB,matM,setAll,patientAt(obj,id){return P[(obj===mB?idxB:idxM)[id]]}};
+}
+
+/* ---------------- SCENE 1: scatter ---------------- */
+const FIL={region:'all',diag:'all',amin:25,amax:74};
+const filterFn=p=>(FIL.region==='all'||p.region===FIL.region)&&(FIL.diag==='all'||p.diag===+FIL.diag)&&p.age>=FIL.amin&&p.age<=FIL.amax;
+function buildScatterScene(){
+  const sc=baseScene('scatter',{pos:[10,7.5,12],target:[0,3.4,0],min:4,max:40});
+  studio(sc.scene,8,16);dataAxes(sc.scene);
+  const sct=makeScatter({radius:.1,posFn:p=>V3(WX(p.age),WY(p.tumor),WZ(p.bmi))});sc.scene.add(sct.group);sc.sct=sct;
+  const ring=new THREE.Mesh(new THREE.SphereGeometry(1,16,12),new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.9}));ring.scale.setScalar(.26);ring.visible=false;sc.scene.add(ring);
+  const mc=V3(0,0,0);let nm=0;P.forEach(p=>{if(p.diag){mc.add(sct.pos[p.idx]);nm++}});mc.multiplyScalar(1/nm);
+  sc.focusLabel='Malignant cluster';
+  sc.presets={overview:()=>[[10,7.5,12],[0,3.4,0]],top:()=>[[0,19,.01],[0,0,0]],side:()=>[[0,3.6,17],[0,3.4,0]],focus:()=>[[mc.x+3.5,mc.y+1.5,mc.z+4.5],[mc.x,mc.y,mc.z]]};
+  sc.selected=null;sc.filter=()=>{sct.setAll(filterFn);const n=P.filter(filterFn).length;$('#fCount').textContent=n+' / '+NP;if(sc.selected&&!filterFn(sc.selected)){sc.selected=null;ring.visible=false;$('#tipScatter').style.display='none'}updateLive()};
+  sc.click=(ndc,ev)=>{
+    ray.setFromCamera(ndc,sc.camera);const hits=ray.intersectObjects([sct.mB,sct.mM]).filter(h=>filterFn(sct.patientAt(h.object,h.instanceId))),tip=$('#tipScatter');
+    if(!hits.length){tip.style.display='none';ring.visible=false;sc.selected=null;updateLive();return}
+    const h=hits[0],p=sct.patientAt(h.object,h.instanceId);sc.selected=p;ring.position.copy(sct.pos[p.idx]);ring.visible=true;
+    const r=canvas3d.getBoundingClientRect();tip.innerHTML=`<b>${p.id}</b><br>Region: ${p.region}<br>Diagnosis: <b style="color:${p.diag?'#ffa98a':'#9be8bd'}">${p.diag?'Malignant':'Benign'}</b><br>Age ${p.age} · Tumor ${p.tumor} mm · BMI ${p.bmi}<br>Lymph node ${p.lymph?'positive':'negative'} · Family Hx ${p.fam?'yes':'no'}`;
+    tip.style.display='block';tip.style.left=clamp(ev.clientX-r.left+12,4,r.width-226)+'px';tip.style.top=clamp(ev.clientY-r.top+12,4,r.height-130)+'px';updateLive();
+  };
+  sc.update=(dt,t)=>{ring.rotation.y=t*.8;const s=.26*(1+(S.reduced?0:.12*Math.sin(t*4)));ring.scale.setScalar(s)};
+  sc.live=()=>{const n=P.filter(filterFn).length,p=sc.selected;return['Scatter · 569 records',[['Visible',n+' / '+NP],['Selected',p?p.id:'—'],['Diagnosis',p?(p.diag?'Malignant':'Benign'):'—'],['Region',p?p.region:'—'],['Age / BMI',p?p.age+' y / '+p.bmi:'—'],['Tumor',p?p.tumor+' mm':'—']]]};
+  return sc;
+}
+
+/* ---------------- SCENE 2: SVM hyperplane ---------------- */
+const HY={C:1,G:1,rot:true};
+let SVs=[],SVU=null;
+function pickSVs(){
+  const score=p=>(p.tumor-135)/40+(p.age-50)/60*.3,by=d=>P.filter(p=>p.diag===d).sort((a,b)=>Math.abs(score(a))-Math.abs(score(b))).slice(0,9);
+  return by(0).concat(by(1));
+}
+function surfH(x,z,g){let sw=.02,sh=.02*SVU.uMean.value;for(const v of SVU.uSV.value){const dx=x-v.x,dz=z-v.z,w=Math.exp(-g*.4*(dx*dx+dz*dz));sw+=w;sh+=w*v.y}return sh/sw}
+function patchSurface(mat,off,withNormal){
+  mat.userData.off=off;
+  mat.onBeforeCompile=sh=>{
+    sh.uniforms.uSV=SVU.uSV;sh.uniforms.uGamma=SVU.uGamma;sh.uniforms.uMean=SVU.uMean;sh.uniforms.uOff=off;
+    sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nuniform vec3 uSV[18];\nuniform float uGamma;\nuniform float uMean;\nuniform float uOff;\nfloat rbfH(vec2 p){float sw=0.02;float acc=0.02*uMean;for(int i=0;i<18;i++){vec2 d=p-uSV[i].xz;float w=exp(-uGamma*0.4*dot(d,d));sw+=w;acc+=w*uSV[i].y;}return acc/sw;}');
+    if(withNormal)sh.vertexShader=sh.vertexShader.replace('#include <beginnormal_vertex>','float h0=rbfH(position.xz);float hx=rbfH(position.xz+vec2(0.05,0.0));float hz=rbfH(position.xz+vec2(0.0,0.05));\nvec3 objectNormal=normalize(vec3(-(hx-h0)/0.05,1.0,-(hz-h0)/0.05));\n#ifdef USE_TANGENT\nvec3 objectTangent=vec3(tangent.xyz);\n#endif\n');
+    sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','vec3 transformed=vec3(position.x,rbfH(position.xz)+uOff,position.z);');
+    if(withNormal)sh.fragmentShader=sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\nfloat fr=abs(normalize(vNormal).z);gl_FragColor.rgb+=0.10*(0.5+0.5*cos(6.2831*(vec3(0.0,0.33,0.67)+fr*1.4)));');
+  };
+  mat.customProgramCacheKey=()=>'rbfsurf'+(withNormal?'n':'b');
+}
+function buildHyperScene(){
+  const sc=baseScene('hyper',{pos:[10,6.5,11],target:[0,3.2,0],min:4,max:40});
+  studio(sc.scene,8,16);dataAxes(sc.scene);
+  SVs=pickSVs();const svPos=SVs.map(p=>V3(WX(p.age),WY(p.tumor),WZ(p.bmi)));
+  SVU={uSV:{value:svPos},uGamma:{value:1},uMean:{value:svPos.reduce((a,v)=>a+v.y,0)/svPos.length}};
+  const sct=makeScatter({radius:.085,opacity:.5,posFn:p=>V3(WX(p.age),WY(p.tumor),WZ(p.bmi))});sc.scene.add(sct.group);
+  const geo=new THREE.PlaneGeometry(8,8,64,64);geo.rotateX(-Math.PI/2);
+  const glass=new THREE.MeshPhysicalMaterial({color:0xdff3ea,metalness:0,roughness:.1,clearcoat:1,clearcoatRoughness:.1,transparent:true,opacity:.55,side:THREE.DoubleSide,depthWrite:false});
+  glass.transmission=.6;glass.iridescence=.3;patchSurface(glass,{value:0},true);
+  const surf=new THREE.Mesh(geo,glass);surf.frustumCulled=false;surf.renderOrder=2;sc.scene.add(surf);
+  const wire=new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.14,depthWrite:false});patchSurface(wire,{value:0},false);
+  const wm=new THREE.Mesh(geo,wire);wm.frustumCulled=false;sc.scene.add(wm);
+  const mkM=(col)=>{const m=new THREE.MeshPhysicalMaterial({color:col,roughness:.3,transparent:true,opacity:.2,side:THREE.DoubleSide,depthWrite:false,clearcoat:.6});m.emissive=new THREE.Color(col);m.emissiveIntensity=.12;return m};
+  const mUp=mkM(0xe74c3c),mDn=mkM(0x2ecc71);patchSurface(mUp,{value:.9},false);patchSurface(mDn,{value:-.9},false);
+  [mUp,mDn].forEach(m=>{const me=new THREE.Mesh(geo,m);me.frustumCulled=false;me.renderOrder=1;sc.scene.add(me)});
+  const svMat=new THREE.MeshPhysicalMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:1,roughness:.2,clearcoat:1}),svGeo=new THREE.SphereGeometry(1,20,14),svMeshes=[];
+  svPos.forEach(v=>{const m=new THREE.Mesh(svGeo,svMat);m.position.copy(v);m.scale.setScalar(.17);m.castShadow=true;sc.scene.add(m);svMeshes.push(m)});
+  const lg=new THREE.BufferGeometry(),lp=new Float32Array(SVs.length*6);lg.setAttribute('position',new THREE.BufferAttribute(lp,3));
+  const lines=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:.95}));lines.frustumCulled=false;sc.scene.add(lines);
+  let acc=0;
+  sc.refresh=()=>{
+    const C=HY.C,G=HY.G,m=.9*Math.pow(C,-.22);SVU.uGamma.value=G;mUp.userData.off.value=m;mDn.userData.off.value=-m;
+    svPos.forEach((v,i)=>{const h=surfH(v.x,v.z,G);lp.set([v.x,v.y,v.z,v.x,h,v.z],i*6)});lg.attributes.position.needsUpdate=true;
+    let ok=0;P.forEach(p=>{const pm=WY(p.tumor)>surfH(WX(p.age),WZ(p.bmi),G);if(pm===!!p.diag)ok++});acc=ok/NP*100;
+    $('#vC').textContent=C.toFixed(2);$('#vG').textContent=G.toFixed(2);$('#mathG').textContent='γ = '+G.toFixed(2)+'  ·  C = '+C.toFixed(2);sc.m=m;updateLive();
+  };
+  sc.applyQ=()=>{glass.transmission=S.quality==='low'?0:.6;glass.opacity=S.quality==='low'?.4:.55;glass.needsUpdate=true};qualityHooks.push(sc.applyQ);sc.applyQ();
+  const cc=V3(0,0,0);svPos.forEach(v=>cc.add(v));cc.multiplyScalar(1/svPos.length);
+  sc.focusLabel='Support vectors';
+  sc.presets={overview:()=>[[10,6.5,11],[0,3.2,0]],top:()=>[[0,19,.01],[0,0,0]],side:()=>[[0,3.6,16],[0,3.2,0]],focus:()=>[[cc.x+3.5,cc.y+2.2,cc.z+4.8],[cc.x,cc.y,cc.z]]};
+  sc.update=(dt,t)=>{const pu=S.reduced?.5:.5+.5*Math.sin(t*2.4);svMat.emissiveIntensity=.8+.9*pu;svMeshes.forEach((m,i)=>m.scale.setScalar(.17*(1+(S.reduced?0:.14*Math.sin(t*2.4+i*.7)))));sc.controls.autoRotate=HY.rot&&!S.paused&&!S.reduced;sc.controls.autoRotateSpeed=.9};
+  sc.live=()=>{const G=HY.G;return['SVM surface (illustrative)',[['C',HY.C.toFixed(2)],['γ (gamma)',G.toFixed(2)],['Margin width',(2*(sc.m||0)*230/8).toFixed(0)+' mm'],['Boundary',G<.5?'smooth':G<2.5?'moderate':G<6?'complex':'very wiggly'],['Support vectors','18 shown'],['Surface-rule acc.',acc.toFixed(1)+'%']]]};
+  sc.refresh();return sc;
+}
+
+/* ---------------- SCENE 3: decision boundary ---------------- */
+const GN=100,GV=GN+1,HS=3;let gridP=null;
+function computeGrid(){
+  gridP=new Float32Array(GV*GV);const dm=P.map(p=>p.diag),wa=[],wt=[];
+  for(let k=0;k<GV;k++){const a=20+k/GN*60,t=40+k/GN*230;wa.push(Float32Array.from(P,p=>Math.exp(-.5*Math.pow((a-p.age)/10,2))));wt.push(Float32Array.from(P,p=>Math.exp(-.5*Math.pow((t-p.tumor)/12,2))))}
+  for(let iz=0;iz<GV;iz++)for(let ix=0;ix<GV;ix++){const A=wa[ix],T=wt[iz];let s=0,m=0;for(let i=0;i<NP;i++){const w=A[i]*T[i];s+=w;if(dm[i])m+=w}gridP[iz*GV+ix]=(m+.25)/(s+.5)}
+}
+function sampleP(x,z){
+  const fx=clamp((x+5)/10*GN,0,GN-.0001),fz=clamp((z+5)/10*GN,0,GN-.0001),ix=Math.floor(fx),iz=Math.floor(fz),tx=fx-ix,tz=fz-iz,g=(a,b)=>gridP[b*GV+a];
+  return(g(ix,iz)*(1-tx)+g(ix+1,iz)*tx)*(1-tz)+(g(ix,iz+1)*(1-tx)+g(ix+1,iz+1)*tx)*tz;
+}
+const RDYLGN=[[0,[26,152,80]],[.25,[166,217,106]],[.5,[255,255,191]],[.75,[253,174,97]],[1,[215,48,39]]];
+function rdylgn(p){p=clamp(p,0,1);for(let i=1;i<RDYLGN.length;i++){if(p<=RDYLGN[i][0]){const a=RDYLGN[i-1],b=RDYLGN[i],t=(p-a[0])/(b[0]-a[0]);return[0,1,2].map(k=>(a[1][k]+(b[1][k]-a[1][k])*t)/255)}}return[.84,.19,.15]}
+const MS_TAB={1:[[3,0]],2:[[0,1]],3:[[3,1]],4:[[1,2]],5:[[3,0],[1,2]],6:[[0,2]],7:[[3,2]],8:[[2,3]],9:[[0,2]],10:[[0,1],[2,3]],11:[[1,2]],12:[[1,3]],13:[[0,1]],14:[[3,0]]};
+function contourSegs(level){
+  const out=[],wx=i=>-5+i/GN*10,g=(i,j)=>gridP[j*GV+i],y=level*HS+.04;
+  for(let j=0;j<GN;j++)for(let i=0;i<GN;i++){
+    const v0=g(i,j),v1=g(i+1,j),v2=g(i+1,j+1),v3=g(i,j+1),idx=(v0>level?1:0)|(v1>level?2:0)|(v2>level?4:0)|(v3>level?8:0);if(idx===0||idx===15)continue;
+    const edge=e=>{let a,b,va,vb;if(e===0){a=[i,j];b=[i+1,j];va=v0;vb=v1}else if(e===1){a=[i+1,j];b=[i+1,j+1];va=v1;vb=v2}else if(e===2){a=[i,j+1];b=[i+1,j+1];va=v3;vb=v2}else{a=[i,j];b=[i,j+1];va=v0;vb=v3}
+      const t=(level-va)/(vb-va);return[wx(a[0]+(b[0]-a[0])*t),y,wx(a[1]+(b[1]-a[1])*t)]};
+    MS_TAB[idx].forEach(([e1,e2])=>{out.push(...edge(e1),...edge(e2))});
+  }
+  return out;
+}
+function buildBoundaryScene(){
+  if(!gridP)computeGrid();
+  const sc=baseScene('boundary',{pos:[9,8,11],target:[0,1,0],min:4,max:40,shadow:9});
+  const geo=new THREE.PlaneGeometry(10,10,GN,GN);geo.rotateX(-Math.PI/2);const pos=geo.attributes.position,col=new Float32Array(pos.count*3);
+  for(let i=0;i<pos.count;i++){const ix=Math.round((pos.getX(i)+5)/10*GN),iz=Math.round((pos.getZ(i)+5)/10*GN),p=gridP[iz*GV+ix];pos.setY(i,p*HS);const c=rdylgn(p);col.set(c,i*3)}
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.computeVertexNormals();
+  const surf=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,flatShading:false,metalness:.2,roughness:.6,side:THREE.DoubleSide}));surf.receiveShadow=true;sc.scene.add(surf);
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(16,16),new THREE.ShadowMaterial({opacity:.18}));floor.rotation.x=-Math.PI/2;floor.position.y=-.02;floor.receiveShadow=true;sc.scene.add(floor);
+  const sct=makeScatter({radius:.11,posFn:p=>{const x=-5+(p.age-20)/60*10,z=-5+(p.tumor-40)/230*10;return V3(x,sampleP(x,z)*HS+.17,z)}});sc.scene.add(sct.group);
+  let fc=V3(0,0,0),fn=0;[[.3,0x1b6aa5],[.5,0xffffff],[.7,0x4a1250]].forEach(([lv,cl])=>{const arr=contourSegs(lv);const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(arr,3));const ls=new THREE.LineSegments(g,new THREE.LineBasicMaterial({color:cl}));sc.scene.add(ls);
+    if(lv===.5)for(let i=0;i<arr.length;i+=3){fc.x+=arr[i];fc.y+=arr[i+1];fc.z+=arr[i+2];fn++}});
+  if(fn)fc.multiplyScalar(1/fn);
+  const lab=(t,x,y,z,s)=>{const sp=makeSprite(t,{size:s||.4,font:30});sp.position.set(x,y,z);sc.scene.add(sp)};
+  lab('Age (years) →',0,.1,6,.42);lab('Tumor size (mm) →',-6.4,.1,0,.42);lab('P(malignant) ↑',-5.6,HS+.4,-5.6,.42);
+  [20,50,80].forEach(a=>lab(a,-5+(a-20)/60*10,.05,5.45,.26));[50,150,250].forEach(t=>lab(t,-5.5,.05,-5+(t-40)/230*10,.26));
+  const marker=new THREE.Mesh(new THREE.SphereGeometry(.14,16,12),new THREE.MeshPhysicalMaterial({color:0xffffff,emissive:0xffffff,emissiveIntensity:.8}));marker.visible=false;sc.scene.add(marker);
+  sc.sct=sct;sc.surf=surf;sc.hov=null;
+  sc.focusLabel='p = 0.5 ridge';
+  sc.presets={overview:()=>[[9,8,11],[0,1,0]],top:()=>[[0,17,.01],[0,0,0]],side:()=>[[13,3,0],[0,1.4,0]],focus:()=>[[fc.x+3,fc.y+3,fc.z+5],[fc.x,fc.y,fc.z]]};
+  const show=(ndc)=>{ray.setFromCamera(ndc,sc.camera);const h=ray.intersectObject(surf)[0],tip=$('#tipBound');
+    if(!h){marker.visible=false;sc.hov=null;return}
+    const x=h.point.x,z=h.point.z,p=sampleP(x,z),age=20+(x+5)/10*60,tum=40+(z+5)/10*230,cls=p>=.5?'Malignant':'Benign',conf=Math.max(p,1-p);
+    marker.position.set(x,p*HS+.15,z);marker.visible=true;sc.hov={age,tum,p,cls,conf};
+    tip.innerHTML=`Age <b>${age.toFixed(0)}</b> y · Tumor <b>${tum.toFixed(0)}</b> mm<br>P(malignant) <b>${p.toFixed(2)}</b> · Confidence <b>${(conf*100).toFixed(0)}%</b><br>Predicted: <b style="color:${p>=.5?'#ffa98a':'#9be8bd'}">${cls}</b>`;updateLive()};
+  sc.hover=show;sc.click=show;
+  sc.update=()=>{};
+  sc.live=()=>{const h=sc.hov;return['Decision surface',[['Age',h?h.age.toFixed(0)+' y':'—'],['Tumor size',h?h.tum.toFixed(0)+' mm':'—'],['P(malignant)',h?h.p.toFixed(2):'—'],['Confidence',h?(h.conf*100).toFixed(0)+'%':'—'],['Predicted',h?h.cls:'—'],['Contours','0.3 · 0.5 · 0.7']]]};
+  return sc;
+}
+
+/* ---------------- SCENE 4: ML pipeline ---------------- */
+const PNODES=[{n:'Data',col:0x3498db,icon:'db'},{n:'Preprocessing',col:0x1abc9c,icon:'filter'},{n:'Scaling',col:0x9b59b6,icon:'scale'},{n:'Training',col:0x2ecc71,icon:'brain'},{n:'Evaluation',col:0xf39c12,icon:'chart'}];
+window.PIPE={built:false,highlight(){},focusNode(){}};
+function iconTexture(type){
+  const cv=document.createElement('canvas');cv.width=cv.height=256;const x=cv.getContext('2d');x.strokeStyle='#fff';x.fillStyle='#fff';x.lineWidth=14;x.lineCap='round';x.lineJoin='round';
+  if(type==='db'){for(let k=0;k<3;k++){x.beginPath();x.ellipse(128,64+k*60,74,24,0,0,Math.PI*2);x.stroke()}x.beginPath();x.moveTo(54,64);x.lineTo(54,184);x.moveTo(202,64);x.lineTo(202,184);x.stroke()}
+  else if(type==='filter'){x.beginPath();x.moveTo(36,60);x.lineTo(220,60);x.lineTo(146,140);x.lineTo(146,216);x.lineTo(110,196);x.lineTo(110,140);x.closePath();x.stroke()}
+  else if(type==='scale'){x.beginPath();x.moveTo(28,196);x.bezierCurveTo(92,196,100,56,128,56);x.bezierCurveTo(156,56,164,196,228,196);x.stroke();x.lineWidth=8;x.setLineDash([12,12]);x.beginPath();x.moveTo(128,56);x.lineTo(128,214);x.stroke()}
+  else if(type==='brain'){const n=[[56,84],[56,172],[128,50],[128,128],[128,206],[200,128]],e=[[0,2],[0,3],[0,4],[1,2],[1,3],[1,4],[2,5],[3,5],[4,5]];x.lineWidth=8;e.forEach(([a,b])=>{x.beginPath();x.moveTo(...n[a]);x.lineTo(...n[b]);x.stroke()});n.forEach(p=>{x.beginPath();x.arc(p[0],p[1],20,0,7);x.fill()})}
+  else{x.beginPath();x.moveTo(40,36);x.lineTo(40,212);x.lineTo(222,212);x.stroke();[[70,120,40],[124,70,40],[178,100,40]].forEach(b=>x.fillRect(b[0],b[1],b[2],212-b[1]-8))}
+  const t=new THREE.CanvasTexture(cv);t.minFilter=THREE.LinearFilter;return t;
+}
+function buildPipelineScene(){
+  const sc=baseScene('pipeline',{pos:[0,2.6,18],target:[0,0,0],min:3,max:40,shadow:12});
+  const fit=()=>Math.max(14,9.6/(Math.tan(22.5*Math.PI/180)*sc.camera.aspect));
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(40,16),new THREE.ShadowMaterial({opacity:.25}));floor.rotation.x=-Math.PI/2;floor.position.y=-2.4;floor.receiveShadow=true;sc.scene.add(floor);
+  const nodes=[],bg=roundedBox(2.2,2.2,.9,.28,16),iconGeo=new THREE.PlaneGeometry(1.35,1.35),SP=3.9;
+  PNODES.forEach((d,i)=>{
+    const g=new THREE.Group(),base=Math.sin(i*1.1)*.45;g.position.set((i-2)*SP,base,0);
+    const mat=new THREE.MeshPhysicalMaterial({color:d.col,roughness:.35,metalness:.1,clearcoat:1,clearcoatRoughness:.15,emissive:d.col,emissiveIntensity:.12});
+    const m=new THREE.Mesh(bg,mat);m.castShadow=true;m.userData.i=i;g.add(m);
+    const ic=new THREE.Mesh(iconGeo,new THREE.MeshBasicMaterial({map:iconTexture(d.icon),transparent:true,toneMapped:false}));ic.position.z=.47;g.add(ic);
+    const lb=makeSprite((i+1)+'. '+d.n,{size:.46,font:34});lb.position.set(0,-1.95,0);g.add(lb);
+    sc.scene.add(g);nodes.push({g,m,mat,base,d});
+  });
+  const tubes=[],parts=[],pGeo=new THREE.SphereGeometry(.11,12,10);
+  for(let i=0;i<4;i++){
+    const a=nodes[i].g.position.clone().add(V3(1.15,0,0)),b=nodes[i+1].g.position.clone().sub(V3(1.15,0,0)),mid=a.clone().lerp(b,.5);mid.y+=.45;
+    const curve=new THREE.CatmullRomCurve3([a,a.clone().lerp(mid,.5),mid,mid.clone().lerp(b,.5),b]);
+    const col=new THREE.Color(PNODES[i].d||PNODES[i].col).lerp(new THREE.Color(PNODES[i+1].col),.5);
+    const tm=new THREE.MeshPhysicalMaterial({color:col,emissive:col,emissiveIntensity:.8,roughness:.3,clearcoat:1,transparent:true,opacity:.9});
+    const tube=new THREE.Mesh(new THREE.TubeGeometry(curve,48,.085,10,false),tm);sc.scene.add(tube);tubes.push(tm);
+    const pm=new THREE.MeshPhysicalMaterial({color:0xffffff,emissive:col,emissiveIntensity:1.6,roughness:.2});
+    for(let k=0;k<7;k++){const p=new THREE.Mesh(pGeo,pm);sc.scene.add(p);parts.push({p,curve,k})}
+  }
+  let sel=0;
+  window.PIPE={built:true,
+    highlight(i){sel=i},
+    focusNode(i){const p=nodes[i].g.position;flyTo(sc,[p.x+1,p.y+.8,p.z+6.2],[p.x,p.y,p.z])}};
+  sc.focusLabel='Training node';
+  sc.presets={overview:()=>[[0,2.6,fit()],[0,0,0],true],top:()=>[[0,fit(),.01],[0,0,0],true],side:()=>[[fit()*.62,2.4,fit()*.5],[0,0,0],true],focus:()=>{const p=nodes[3].g.position;return[[p.x+1,p.y+.8,p.z+6.2],[p.x,p.y,p.z]]}};
+  const hit=ndc=>{ray.setFromCamera(ndc,sc.camera);const h=ray.intersectObjects(nodes.map(n=>n.m))[0];return h?h.object.userData.i:-1};
+  sc.click=ndc=>{const i=hit(ndc);if(i>=0)setStep(i,true)};
+  sc.hover=ndc=>{canvas3d.style.cursor=hit(ndc)>=0?'pointer':'grab'};
+  sc.update=(dt,t)=>{
+    const sp=S.reduced?.25:1;
+    nodes.forEach((n,i)=>{n.g.position.y=n.base+(S.reduced?0:Math.sin(t*1.2+i)*.12);const on=i===sel;n.mat.emissiveIntensity+=((on?.6:.12)-n.mat.emissiveIntensity)*Math.min(1,dt*6);n.g.scale.setScalar(n.g.scale.x+((on?1.1:1)-n.g.scale.x)*Math.min(1,dt*6))});
+    tubes.forEach((m,i)=>m.emissiveIntensity=.6+.4*Math.sin(t*3-i));
+    parts.forEach(o=>{const u=(t*.22*sp+o.k/7)%1;o.p.position.copy(o.curve.getPoint(u))});
+    // keep tube endpoints following bobbing nodes is cosmetic; curves are fixed on base positions
+  };
+  sc.live=()=>['Pipeline flow',[['Step',(stepNow+1)+' / 5'],['Stage',STEPS[stepNow].short],['Particles',parts.length],['Nodes',5],['Direction','left → right']]];
+  return sc;
+}
+
+/* ---------------- SCENE 5: confusion matrix ---------------- */
+const CELLS=[
+ {k:'TN',n:61,x:-2.4,z:-2.4,col:0x2ecc71,sub:'Benign → Benign',title:'True Negative (TN) — 61 records',txt:'Benign records correctly classified as benign.',m:'Specificity = TN / (TN + FP) = 61 / 70 = 87.14%'},
+ {k:'FP',n:9,x:2.4,z:-2.4,col:0xf1c40f,sub:'Benign → Malignant',title:'False Positive (FP) — 9 records',txt:'Benign records incorrectly flagged as malignant. They may require further assessment.',m:'False-positive rate = 9 / 70 = 12.86% · Precision (malignant) = 40 / 49 = 81.63%'},
+ {k:'FN',n:4,x:-2.4,z:2.4,col:0xe74c3c,sub:'Malignant → Benign',title:'False Negative (FN) — 4 records',txt:'Malignant records incorrectly classified as benign. This error is important to monitor because it may delay further assessment.',m:'Miss rate = 4 / 44 = 9.09% · Recall (sensitivity) = 40 / 44 = 90.91%'},
+ {k:'TP',n:40,x:2.4,z:2.4,col:0x27ae60,sub:'Malignant → Malignant',title:'True Positive (TP) — 40 records',txt:'Malignant records correctly classified as malignant.',m:'Recall = 40 / 44 = 90.91% · F1-score = 86.02% · Accuracy = 101 / 114 = 88.60%'}
+];
+let cellSel=null;
+function openCell(k){
+  const c=CELLS.find(x=>x.k===k);if(!c)return;cellSel=k;const p=$('#cpanel');
+  p.innerHTML=`<button class="btn x" aria-label="Close details" id="cpX">✕</button><h3 style="color:#${c.col.toString(16).padStart(6,'0')}">${c.k}</h3><h3 style="font-size:1rem">${c.title}</h3><p>${c.txt}</p><p style="font-family:var(--mono);font-size:.78rem;background:var(--bg2);padding:8px;border-radius:8px">${c.m}</p><p style="font-size:.76rem;color:var(--mut)">Rows = actual diagnosis, columns = predicted. Test set: 70 benign + 44 malignant = 114.</p>`;
+  p.classList.add('open');$('#cpX').addEventListener('click',closeCell);updateLive();
+}
+function closeCell(){$('#cpanel').classList.remove('open');cellSel=null;updateLive()}
+function buildConfusionScene(){
+  const sc=baseScene('confusion',{pos:[7,6,9],target:[0,1.3,0],min:4,max:30,shadow:9});
+  studio(sc.scene,10,20);const geo=roundedBox(1,1,1,.1,16),cubes=[];
+  CELLS.forEach(c=>{
+    c.side=2.2*Math.cbrt(c.n/61);c.base=c.side/2+.35;
+    const mat=new THREE.MeshPhysicalMaterial({color:c.col,roughness:.25,metalness:.1,clearcoat:1,clearcoatRoughness:.1,emissive:c.col,emissiveIntensity:.08});
+    const m=new THREE.Mesh(geo,mat);m.scale.setScalar(c.side);m.position.set(c.x,c.base,c.z);m.castShadow=true;m.userData.k=c.k;sc.scene.add(m);c.mesh=m;c.mat=mat;cubes.push(m);
+    c.el=$(`.clabel[data-c="${c.k}"]`);c.el.innerHTML=`<b>${c.k} · ${c.n}</b><small>${c.sub}</small>`;
+  });
+  const lab=(t,x,z)=>{const s=makeSprite(t,{size:.4,font:30});s.position.set(x,.06,z);sc.scene.add(s)};
+  lab('Predicted: Benign',-2.4,-5);lab('Predicted: Malignant',2.4,-5);lab('Actual: Benign',-5.6,-2.4);lab('Actual: Malignant',-5.6,2.4);
+  const fnp=CELLS[2];
+  sc.focusLabel='False negatives';
+  sc.presets={overview:()=>[[7,6,9],[0,1.3,0]],top:()=>[[0,13,.01],[0,0,0]],side:()=>[[0,3,12],[0,1.3,0]],focus:()=>[[fnp.x+2,fnp.base+1.6,fnp.z+5],[fnp.x,fnp.base,fnp.z]]};
+  sc.click=ndc=>{ray.setFromCamera(ndc,sc.camera);const h=ray.intersectObjects(cubes)[0];if(h)openCell(h.object.userData.k);else closeCell()};
+  sc.hover=ndc=>{ray.setFromCamera(ndc,sc.camera);canvas3d.style.cursor=ray.intersectObjects(cubes)[0]?'pointer':'grab'};
+  sc.update=(dt,t)=>{
+    CELLS.forEach((c,i)=>{c.mesh.position.y=c.base+(S.reduced?0:Math.sin(t*1.1+i*1.7)*.08);
+      if(c.k==='FN'){const pu=S.reduced?.5:Math.exp(-(t%2)*3.2);c.mat.emissiveIntensity=.15+1.1*pu;c.mesh.scale.setScalar(c.side*(1+.07*pu))}
+      else c.mat.emissiveIntensity=cellSel===c.k?.5:.08});
+  };
+  sc.late=()=>{sc.camera.updateMatrixWorld();const w=canvas3d.clientWidth,h=canvas3d.clientHeight;
+    CELLS.forEach(c=>{const v=c.mesh.position.clone();v.y+=c.side/2+.15;v.project(sc.camera);if(v.z>1){c.el.style.display='none';return}c.el.style.display='block';c.el.style.left=((v.x*.5+.5)*w)+'px';c.el.style.top=((-v.y*.5+.5)*h)+'px'})};
+  sc.live=()=>{const c=CELLS.find(x=>x.k===cellSel);return['Confusion matrix',[['TN / FP','61 / 9'],['FN / TP','4 / 40'],['Sensitivity','90.91%'],['Specificity','87.14%'],['Accuracy','88.60%'],['Selected',c?c.k+' · '+c.n:'—']]]};
+  $('#cmChips').innerHTML=CELLS.map(c=>`<button class="btn" data-k="${c.k}">${c.k} · ${c.n} — ${c.sub}</button>`).join('');
+  $('#cmChips').addEventListener('click',e=>{const b=e.target.closest('button[data-k]');if(b)openCell(b.dataset.k)});
+  return sc;
+}
+
+/* ============================ APP: mount, render loop, UI ============================ */
+const BUILDERS={scatter:buildScatterScene,hyper:buildHyperScene,boundary:buildBoundaryScene,pipeline:buildPipelineScene,confusion:buildConfusionScene};
+const STAGE_SECS={1:'pipeline',2:'scatter',3:'hyper',4:'pipeline',6:'confusion',7:'boundary'};
+const FOCUS_LABELS={scatter:'Malignant cluster',hyper:'Support vectors',boundary:'p = 0.5 ridge',pipeline:'Training node',confusion:'False negatives'};
+function ensureScene(name){
+  let sc=SC[name];
+  if(!sc||!sc.built){sc=BUILDERS[name]();sc.built=true;sc.needsSnap=true;sc.scene.background=bgTexture(S.dark);if(name==='scatter')sc.filter();if(name==='pipeline')PIPE.highlight(stepNow)}
+  return sc;
+}
+function setLive(t,rows){$('#liveT').textContent=t;$('#liveDl').innerHTML=rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}
+function updateLive(){
+  if(activeSC&&activeSC.live){const r=activeSC.live();setLive(r[0],r[1])}
+  else setLive(SECTIONS[S.sec-1],[['Section',S.sec+' / 11'],['Records','569'],['Benign / malig.','351 / 218'],['Test set','114']]);
+}
+function resizeRenderer(){
+  if(!HAS3D||!activeSC)return;const host=canvas3d.parentElement;if(!host)return;const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);
+  const dpr=window.devicePixelRatio||1,pr=S.quality==='low'?1:Math.min(dpr,S.quality==='medium'?1.5:2);
+  renderer.setPixelRatio(pr);renderer.setSize(w,h,false);composer.setPixelRatio(pr);composer.setSize(w,h);
+  fxaaPass.material.uniforms['resolution'].value.set(1/(w*pr),1/(h*pr));
+  Object.keys(SC).forEach(k=>{SC[k].camera.aspect=w/h;SC[k].camera.updateProjectionMatrix()});
+}
+function mountScene(name){
+  const host=$('#sec'+S.sec+' .host');const sc=ensureScene(name);host.appendChild(canvas3d);activeSC=sc;canvas3d.style.cursor='grab';
+  Object.keys(SC).forEach(k=>SC[k].controls.enabled=(SC[k]===sc));
+  resizeRenderer();
+  if(sc.needsSnap){const p=sc.presets.overview();flyTo(sc,p[0],p[1],p[2]);sc.tween.t=sc.tween.dur;tickTween(sc,0);sc.needsSnap=false}
+}
+function applyQuality(){
+  const usePost=S.quality!=='low';bloomPass.strength=S.quality==='high'?.4:.3;bloomPass.radius=.6;bloomPass.enabled=S.bloom&&usePost;
+  qualityHooks.forEach(f=>f());resizeRenderer();
+  $$('[data-q]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.q===S.quality));$('#rQ').textContent=S.quality;
+  $('#rPost').textContent=usePost?('FXAA'+(bloomPass.enabled?' + bloom':'')):'off';
+}
+function applyShadows(){
+  renderer.shadowMap.enabled=S.shadows;
+  Object.keys(SC).forEach(k=>{const sc=SC[k];sc.scene.userData.key.castShadow=S.shadows;sc.scene.traverse(o=>{if(o.material){(Array.isArray(o.material)?o.material:[o.material]).forEach(m=>m.needsUpdate=true)}})});
+  $('#tShadow').setAttribute('aria-pressed',S.shadows);
+}
+function applyTheme(){
+  document.documentElement.classList.toggle('dark',S.dark);$('#tDark').setAttribute('aria-pressed',S.dark);
+  if(HAS3D){Object.keys(SC).forEach(k=>{if(SC[k].built)SC[k].scene.background=bgTexture(S.dark)});themeHooks.forEach(f=>f(S.dark));if(bloomPass)bloomPass.threshold=S.dark?.8:.95}
+  redrawCharts();
+}
+function redrawCharts(){
+  const n=S.sec;if(n===2)drawDist(1);else if(n===5)drawBars(1);else if(n===8)drawHeat();else if(n===9)drawCx(1);else if(n===1||n===4)renderSteps();
+  if(!$('#modal').hidden){const t=$('#mTitle').textContent;const k=FEAT.findIndex(f=>t.indexOf(f.n)===0);if(k>=0){const m=t.match(/^(.+?) (?:vs|—) (.+?)(?: — distribution)?$/);const j=m?FEAT.findIndex(f=>f.n===m[2]):k;drawModal(k,j<0?k:j)}}
+}
+function togglePause(){S.paused=!S.paused;$('#tPause').setAttribute('aria-pressed',S.paused);$('#tPause').textContent=S.paused?'Paused':'Pause'}
+function closeDrawers(){$('#sideNav').classList.remove('open');$('#scrim').classList.remove('show');$('#navBtn').setAttribute('aria-expanded','false');$('#controls').classList.remove('open');$('#ctlBtn').setAttribute('aria-expanded','false')}
+const sectionEnter={
+  1:()=>renderSteps(),4:()=>renderSteps(),
+  2:()=>anim('dist',900,p=>drawDist(p)),5:()=>anim('bars',900,p=>drawBars(p)),
+  8:()=>drawHeat(),9:()=>anim('cx',1400,p=>drawCx(p)),
+  6:()=>{closeCell()}
+};
+function showSection(n){
+  n=clamp(n,1,11);S.sec=n;
+  $$('.sec').forEach(s=>s.classList.toggle('active',s.id==='sec'+n));
+  $$('#navList a').forEach(a=>{if(+a.dataset.n===n)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current')});
+  closeDrawers();
+  const name=STAGE_SECS[n];
+  if(HAS3D&&name)mountScene(name);else{activeSC=null;if(HAS3D)Object.keys(SC).forEach(k=>SC[k].controls.enabled=false)}
+  if(sectionEnter[n])sectionEnter[n]();
+  try{history.replaceState(null,'','#s'+n)}catch(e){}
+  window.scrollTo(0,0);updateLive();
+}
+let pendingHover=null,lastT=performance.now(),fpsT=0,fpsN=0;
+function ndcOf(e){const r=canvas3d.getBoundingClientRect();return new THREE.Vector2(((e.clientX-r.left)/r.width)*2-1,-((e.clientY-r.top)/r.height)*2+1)}
+function initPointer(){
+  let down=null;
+  canvas3d.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY}});
+  canvas3d.addEventListener('pointerup',e=>{if(!down||!activeSC)return;const d=Math.hypot(e.clientX-down.x,e.clientY-down.y);down=null;if(d<6&&activeSC.click)activeSC.click(ndcOf(e),e)});
+  canvas3d.addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&e.buttons===0&&activeSC&&activeSC.hover)pendingHover=e});
+}
+function frame(now){
+  requestAnimationFrame(frame);
+  const raw=(now-lastT)/1000,dt=Math.min(.05,raw);lastT=now;
+  fpsT+=raw;fpsN++;if(fpsT>=.5){$('#rFps').textContent=Math.round(fpsN/fpsT);fpsT=0;fpsN=0;if(renderer){$('#rDraw').textContent=renderer.info.render.calls;$('#rTri').textContent=renderer.info.render.triangles}}
+  if(!HAS3D||!activeSC||document.hidden)return;
+  if(!S.paused)animT+=dt;
+  const sc=activeSC;tickTween(sc,dt);sc.update(dt,animT);sc.controls.update();
+  if(pendingHover){const e=pendingHover;pendingHover=null;if(sc.hover)sc.hover(ndcOf(e),e)}
+  if(sc.late)sc.late();
+  renderer.info.reset();
+  if(S.quality!=='low'){renderPass.scene=sc.scene;renderPass.camera=sc.camera;composer.render(dt)}else renderer.render(sc.scene,sc.camera);
+}
+function buildNav(){
+  $('#navList').innerHTML=SECTIONS.map((s,i)=>`<a href="#s${i+1}" data-n="${i+1}"><span>${String(i+1).padStart(2,'0')}</span>${s}</a>`).join('');
+  $('#navList').addEventListener('click',e=>{const a=e.target.closest('a');if(a){e.preventDefault();showSection(+a.dataset.n)}});
+}
+function buildToolbars(){
+  $$('.stage-wrap').forEach(w=>{
+    const bar=$('.presets',w);bar.innerHTML='<span class="lbl">Camera</span><button class="btn" data-p="overview">Overview</button><button class="btn" data-p="top">Top-down</button><button class="btn" data-p="side">Side</button><button class="btn" data-p="focus">Focus: '+FOCUS_LABELS[w.dataset.scene]+'</button><button class="btn" data-p="overview" title="Shortcut: R">Reset (R)</button>';
+    bar.addEventListener('click',e=>{const b=e.target.closest('button[data-p]');if(b)applyPreset(b.dataset.p)});
+  });
+}
+function initUI(){
+  $('#navBtn').addEventListener('click',()=>{const o=$('#sideNav').classList.toggle('open');$('#scrim').classList.toggle('show',o);$('#navBtn').setAttribute('aria-expanded',o)});
+  $('#scrim').addEventListener('click',closeDrawers);
+  $('#ctlBtn').addEventListener('click',()=>{const o=$('#controls').classList.toggle('open');$('#ctlBtn').setAttribute('aria-expanded',o)});
+  $('#rHandle').addEventListener('click',()=>{const o=$('#readouts').classList.toggle('open');$('#rHandle').setAttribute('aria-expanded',o);$('#rArrow').textContent=o?'▼':'▲'});
+  $$('[data-q]').forEach(b=>b.addEventListener('click',()=>{S.quality=b.dataset.q;if(HAS3D)applyQuality()}));
+  $('#tShadow').setAttribute('aria-pressed',S.shadows);$('#tBloom').setAttribute('aria-pressed',S.bloom);
+  $('#tShadow').addEventListener('click',()=>{S.shadows=!S.shadows;if(HAS3D)applyShadows()});
+  $('#tBloom').addEventListener('click',()=>{S.bloom=!S.bloom;$('#tBloom').setAttribute('aria-pressed',S.bloom);if(HAS3D)applyQuality()});
+  $('#tDark').addEventListener('click',()=>{S.dark=!S.dark;applyTheme()});
+  $('#tPause').addEventListener('click',togglePause);
+  // scatter filters
+  $('#fRegion').innerHTML='<option value="all">All regions (569)</option>'+REGIONS.map(r=>`<option value="${r[0]}">${r[0]} (${r[1]})</option>`).join('');
+  const refilter=()=>{if(SC.scatter&&SC.scatter.built)SC.scatter.filter()};
+  $('#fRegion').addEventListener('change',e=>{FIL.region=e.target.value;refilter()});
+  $$('[data-d]',$('#sec2')).forEach(b=>b.addEventListener('click',()=>{FIL.diag=b.dataset.d;$$('[data-d]',$('#sec2')).forEach(x=>x.setAttribute('aria-pressed',x===b));refilter()}));
+  const ag=()=>{let a=+$('#fAmin').value,b=+$('#fAmax').value;if(a>b){const t=a;a=b;b=t}FIL.amin=a;FIL.amax=b;$('#vAmin').textContent=a;$('#vAmax').textContent=b;refilter()};
+  $('#fAmin').addEventListener('input',ag);$('#fAmax').addEventListener('input',ag);
+  // hyperplane sliders
+  const sC=$('#sC'),sG=$('#sG');sC.step='any';sC.value=100/3;
+  const hy=()=>{HY.C=Math.pow(10,-1+3*sC.value/100);HY.G=Math.pow(10,-1+2*sG.value/100);$('#vC').textContent=HY.C.toFixed(2);$('#vG').textContent=HY.G.toFixed(2);if(SC.hyper&&SC.hyper.built)SC.hyper.refresh()};
+  sC.addEventListener('input',hy);sG.addEventListener('input',hy);hy();
+  $('#bRot').addEventListener('click',()=>{HY.rot=!HY.rot;$('#bRot').setAttribute('aria-pressed',HY.rot);$('#bRot').textContent=HY.rot?'Rotating':'Rotate off'});
+  $('#cxN').addEventListener('input',()=>drawCx(1));
+  // keyboard
+  document.addEventListener('keydown',e=>{
+    if(e.ctrlKey||e.metaKey||e.altKey)return;
+    if(!$('#modal').hidden){if(e.key==='Escape')closeModal();return}
+    if(e.key==='Escape'){closeDrawers();if(cellSel)closeCell();return}
+    const tag=e.target.tagName;if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA'||e.shiftKey)return;
+    if(e.key>='1'&&e.key<='9')showSection(+e.key);else if(e.key==='0')showSection(10);else if(e.key==='-')showSection(11);
+    else if(e.key==='ArrowRight')showSection(S.sec%11+1);else if(e.key==='ArrowLeft')showSection((S.sec+9)%11+1);
+    else if(e.key==='r'||e.key==='R')applyPreset('overview');
+    else if(e.key===' '){e.preventDefault();togglePause()}
+  });
+  document.addEventListener('keyup',e=>{if(e.key===' '&&e.target.tagName==='BUTTON')e.preventDefault()});
+  let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{resizeRenderer();redrawCharts()},120)});
+  if(window.ResizeObserver)new ResizeObserver(()=>{if(HAS3D&&activeSC)resizeRenderer()}).observe($('main'));
+}
+function init(){
+  buildNav();buildStepPanels();buildToolbars();initBars();initHeat();initCode();initUI();
+  if(HAS3D)initRenderer();
+  if(HAS3D){renderer.info.autoReset=false;initPointer();applyQuality()}
+  else{$$('.host').forEach(h=>{h.innerHTML='<div style="padding:24px;color:#333">3D unavailable: could not load Three.js or WebGL.</div>'});$('#fallback3d').style.display='block'}
+  $('#tBloom').setAttribute('aria-pressed',S.bloom);
+  applyTheme();
+  const h=parseInt((location.hash||'').replace('#s',''),10);
+  showSection(h>=1&&h<=11?h:1);
+  requestAnimationFrame(frame);
+}
+init();
+</script>
+</body>
+</html>
